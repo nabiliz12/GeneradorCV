@@ -1,14 +1,10 @@
 <script setup lang="ts">
-import MyForm from '@/components/MyForm.vue';
-
-
+import PostHomeView from '@/views/PostHomeView.vue';
 
 </script>
 
 <template>
 
-
-<MyForm />
-
+<PostHomeView></PostHomeView>
 
 </template>
