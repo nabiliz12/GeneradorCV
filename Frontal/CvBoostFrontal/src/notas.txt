@@ -1,0 +1,15 @@
+HomeView.vue
+    Formulario con campos básicos:
+    Nombre, Apellidos
+    Email
+    Teléfono
+    Experiencia laboral (textarea)
+    Educación (textarea)
+    Botón “Generar CV” que envía los datos a PreviewView.
+
+PreviewView.vue
+    Muestra los datos del formulario en un diseño simple tipo tarjeta (Card.vue)
+    Botón “Volver” para regresar al formulario y editar.
+
+Card.vue
+    Componente reutilizable para secciones como Educación o Experiencia.
