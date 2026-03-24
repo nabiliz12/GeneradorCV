@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-
-const text = ref('')
+import router from '@/router'
+import { reactive } from 'vue'
+import PostFormulario from './PostFormulario.vue'
 
 const form=reactive({
   nombre:'',
@@ -12,7 +12,7 @@ const form=reactive({
 async function submitForm() {
   console.log('Form submitted:', form)
 
-  const response = await fetch('http://127.0.0.1:8000/api/form', {
+  const response = await fetch('http://127.0.0.1:8001/api/form', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -25,6 +25,10 @@ async function submitForm() {
   } else {
     console.error('Failed to send form data to the backend')
   }
+
+  router.push('/forms/descargarpdf')
+
+
 }
 
 </script>
@@ -55,6 +59,7 @@ async function submitForm() {
 
   </form>
 
+  <PostFormulario :info="form" />
 
     </div>
 
