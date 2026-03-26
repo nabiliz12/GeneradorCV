@@ -2,13 +2,14 @@
 import router from '@/router'
 import { reactive } from 'vue'
 import PostFormulario from './PostFormulario.vue'
+import Login from './auth/Login.vue'
 
 const form=reactive({
   nombre:'',
   email:'',
   experiencia:''
 })
-
+// ideas: https://www.cvmaker.es/
 async function submitForm() {
   console.log('Form submitted:', form)
 
@@ -31,9 +32,23 @@ async function submitForm() {
 
 }
 
+function login() {
+  router.push('/login')
+}
+
+function registrarse() {
+  router.push('/register')
+}
 </script>
 
 <template>
+
+  <div>
+    <button @click="login">Iniciar sesión</button>
+    <button @click="registrarse">Registrarse</button>
+  </div>
+
+
   <div>
 
   <form @submit.prevent="submitForm">
