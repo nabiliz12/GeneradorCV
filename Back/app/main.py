@@ -9,6 +9,11 @@ from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
 
 
+# & c:\Users\nabil.bouihia\CV_Boost\Back\.venv\Scripts\Activate.ps1
+#python -m uvicorn app.main:app --reload --port 8001
+
+
+
 app = FastAPI()
 
 
