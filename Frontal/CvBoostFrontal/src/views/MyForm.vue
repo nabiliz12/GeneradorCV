@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { reactive } from 'vue'
-import PostFormulario from './PostFormulario.vue'
-import Login from './auth/Login.vue'
+import PostFormulario from './DescargarFormulario.vue'
 
 const form=reactive({
   nombre:'',
@@ -74,7 +73,6 @@ function registrarse() {
 
   </form>
 
-  <PostFormulario :info="form" />
 
     </div>
 

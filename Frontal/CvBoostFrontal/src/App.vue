@@ -3,80 +3,114 @@ import { RouterLink, RouterView } from 'vue-router'
 </script>
 
 <template>
-      <img alt="Vue logo" class="logo" src="@/assets/logo.png" width="125" height="125" />
-  <header>
+  <div class="app-wrapper">
+    <header class="navbar">
+      <div class="logo-section">
+        <img src="@/assets/logo.png" alt="logo" class="logo-img" />
+        <span class="brand">CV Builder</span>
+      </div>
 
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
+      <nav class="navigation">
+        <RouterLink to="/">Inicio</RouterLink>
+        <RouterLink to="/forms/history">Formularios</RouterLink>
       </nav>
+    </header>
 
-  </header>
-
-  <RouterView />
+    <main class="content-full">
+      <RouterView />
+    </main>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
+<style>
+/* Reset radical para asegurar que nada nos robe espacio */
+html, body {
+  margin: 0;
+  padding: 0;
   width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+  height: 100%;
+  background-color: #ffffff; /* O el color que prefieras de fondo total */
+}
+</style>
+
+<style scoped>
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+/* NAVBAR MODERNA PERO FULL WIDTH */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 70px;
+  background: #ffffff;
+  border-bottom: 1px solid #eee;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
+.logo-img {
+  height: 40px;
+  width: auto;
 }
 
-nav a:first-of-type {
-  border: 0;
+.brand {
+  font-weight: 800;
+  font-size: 22px;
+  color: #1a1a1a;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+/* NAVEGACIÓN */
+.navigation {
+  display: flex;
+  gap: 15px;
+}
+
+.navigation a {
+  text-decoration: none;
+  color: #666;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+.navigation a:hover {
+  background: #f5f5f5;
+  color: #000;
+}
+
+.navigation a.router-link-exact-active {
+  background: #000;
+  color: #fff;
+}
+
+/* AQUÍ ESTÁ EL TRUCO: TODO EL ANCHO */
+.content-full {
+  flex: 1;
+  width: 100%;
+  padding: 40px; /* Espacio interno para que el texto no toque el borde del monitor */
+  box-sizing: border-box;
+}
+
+/* RESPONSIVE PARA MÓVILES */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 20px;
   }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
+  .content-full {
+    padding: 20px;
   }
 }
 </style>
