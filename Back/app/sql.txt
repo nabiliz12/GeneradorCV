@@ -1,0 +1,12 @@
+create database if not exists cvboostdatabase1;
+use cvboostdatabase1;
+
+create table if not exists forms(
+id_form int primary key auto_increment not null,
+nombre varchar(100),
+email varchar(100),
+experiencia varchar(100)
+);
+
+select * from forms;
+

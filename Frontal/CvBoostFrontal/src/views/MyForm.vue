@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import router from '@/router'
 import { reactive } from 'vue'
-import PostFormulario from './DescargarFormulario.vue'
+import PostFormulario from './VistaPreviaForm.vue'
 
 const form=reactive({
   nombre:'',
@@ -22,11 +22,10 @@ async function submitForm() {
 
   if (response.ok) {
     console.log('Form data successfully sent to the backend')
+    router.push('/forms/vista-previa')
   } else {
     console.error('Failed to send form data to the backend')
   }
-
-  router.push('/forms/descargarpdf')
 
 
 }

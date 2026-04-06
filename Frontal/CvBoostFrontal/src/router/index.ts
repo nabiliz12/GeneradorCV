@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import MyForm from '@/views/MyForm.vue'
-import DescargarFormulario from '@/views/DescargarFormulario.vue'
 import Login from '@/views/auth/Login.vue'
 import Registro from '@/views/auth/Registro.vue'
 import HistorialFormularios from '@/views/HistorialFormularios.vue'
+import VistaPreviaForm from '@/views/VistaPreviaForm.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,9 +35,9 @@ const router = createRouter({
       component: Registro,
     },
     {
-      path: '/forms/descargarpdf',
-      name: 'descargarpdf',
-      component: DescargarFormulario
+      path: '/forms/vista-previa',
+      name: 'vistaprevia',
+      component: VistaPreviaForm
     }
   ],
 })

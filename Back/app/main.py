@@ -7,15 +7,15 @@ from fpdf import FPDF
 from pydantic import BaseModel
 from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
+from sqlalchemy import create_engine, text
 
 
 # & c:\Users\nabil.bouihia\CV_Boost\Back\.venv\Scripts\Activate.ps1
 #python -m uvicorn app.main:app --reload --port 8001
 
-
+#pip install fastapi uvicorn sqlalchemy pymysql
 
 app = FastAPI()
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,10 +27,14 @@ app.add_middleware(
 
 
 # conectar mongodb
-
 client = AsyncIOMotorClient("mongodb://localhost:27017")
 db = client["CvBoostDataBase"]
 collection = db["formulario"]
+
+# conectar MYSQL
+DATABASE_URL = "mysql+pymysql://root:abc123.@localhost:3306/cvboostdatabase1"
+engine = create_engine(DATABASE_URL)
+
 
 
 # esto es una prueba
@@ -39,18 +43,22 @@ def read_root():
     return {"message": "Hola FastAPI"}
 
 
-class FormularioDatos(BaseModel):
-    nombre: str
-    email: str
-    experiencia: str
+
 
 # Ruta post para recibir formulario
 
-
 @app.post("/api/form")
-async def recibir_formulario(data: FormularioDatos):
+async def recibir_formulario(data: Formul):
     print("DATA RECIBIDA:", data.dict())
     await collection.insert_one(data.dict())
+    db=engine.connect()
+    
+    query = text("""INSERT INTO forms (nombre, email, experiencia)VALUES (:nombre, :email, :experiencia)""")
+    
+    db.execute(query, {"nombre": data.nombre, "email": data.email, "experiencia": data.experiencia})
+    db.commit()
+    db.close()
+
     return {"mensaje": "Formulario recibido", "data": data}
 
 
@@ -83,3 +91,5 @@ async def descargarPDf(data: FormularioDatos):
     return StreamingResponse(buffer, media_type="application/pdf", headers={
         "Content-Disposition": "attachment; filename=formulario.pdf"
     })
+    
+    
