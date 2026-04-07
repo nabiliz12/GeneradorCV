@@ -1,22 +1,8 @@
-cvboost/
-│
-├─ app/
-│   ├─ main.py                # FastAPI app y wiring
-│   ├─ domain/                # Lógica de negocio pura
-│   │   ├─ models.py          # Entidades del dominio (CV, Usuario, Experiencia)
-│   │   ├─ services.py        # Casos de uso / lógica de negocio
-│   │   └─ ports.py           # Interfaces de puertos (entrada y salida)
-│   │
-│   ├─ adapters/
-│   │   ├─ inbound/           # Adaptadores entrantes (REST API)
-│   │   │   └─ rest.py
-│   │   └─ outbound/          # Adaptadores salientes (DB, storage, email)
-│   │       └─ repository.py
-│   │
-│   └─ schemas/               # Pydantic schemas para request/response
-│       └─ user.py
-│
-└─ tests/
-
-
-arquitectura hexagonal
+fastapi==0.135.3
+uvicorn==0.44.0
+sqlalchemy==2.0.49
+pymysql==1.1.2
+pymongo>=4.9,<5.0
+motor==3.7.1
+fpdf==1.7.2
+python-multipart==0.0.6

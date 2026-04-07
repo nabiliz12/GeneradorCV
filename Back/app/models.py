@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class ForumData(BaseModel):
+class FormDataModel(BaseModel):
     nombre: str
     email: str
     experiencia: str
