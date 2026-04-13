@@ -19,6 +19,7 @@ const router = createRouter({
       name: 'forms',
       component:MyForm
     },
+
     {
       path:'/forms/history',
       name:'history',

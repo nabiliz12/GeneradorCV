@@ -1,3 +1,3 @@
 <template>
-  <h1>Historial de Formularios</h1>
+  <strong>Historial de Formularios</strong>
 </template>
