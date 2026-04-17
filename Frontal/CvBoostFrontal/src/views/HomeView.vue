@@ -23,9 +23,7 @@ function irAlFormulario() {
       Comenzar gratis
     </button>
 
-    <div class="mini-text">
-      ⚡ Sin tarjeta · 🤖 IA automática · 📄 CV optimizado en segundos
-    </div>
+  
 
   </section>
 </template>

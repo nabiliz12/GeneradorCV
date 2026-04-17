@@ -99,10 +99,6 @@ function registrarse() {
 
 <template>
   <div class="page">
-    <div class="top-bar">
-      <button @click="login" class="btn-secondary">Iniciar sesión</button>
-      <button @click="registrarse" class="btn-primary">Registrarse</button>
-    </div>
 
     <!-- UNA SOLA CARD PARA TODO -->
     <div class="card">
@@ -218,21 +214,21 @@ function registrarse() {
 
         <img v-if="fotoPerfil" :src="fotoPerfil" class="avatar" />
 
-        <button @click="submitForm" type="button">Generar CV</button>
+        <button @click="anteriorPagina" type="button">Atrás</button>
+        <button @click="submitForm()">Generar CV</button>
+
       </div>
 
-      <!-- PAGE 6 SIN FOTO -->
+      <!-- PAGE 6 SIN FOTO escoger plantilla -->
       <div v-if="pagina === 6 && !ponerFoto">
-        <h1>Plantilla sin foto</h1>
+        <h1>Generando cv...</h1>
 
-        <img
-          :src="cvNoPhoto"
-          alt="Plantilla sin foto"
-          style="width: 100%; border-radius: 8px;"
-        />
 
-        <button @click="submitForm" type="button">Generar CV</button>
+
+        <!-- <button @click="submitForm()" type="button">Generar CV</button> -->
       </div>
+
+
 
     </div>
   </div>
