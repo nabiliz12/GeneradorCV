@@ -30,6 +30,8 @@ class Idioma(BaseModel):
     idioma: str
     nivel: str
     
+class skills(BaseModel):
+    skill: str
 class OfertaDeTrabajo(BaseModel):
     empresa: str
     descripcion: str
@@ -40,6 +42,7 @@ class FormDataModel(BaseModel):
     certificaciones: list[Certificacion]
     experiencia: list[Experiencia]
     idiomas: list[Idioma]
+    skills: list[skills]
     foto: bool
     ofertaDeTrabajo: OfertaDeTrabajo
 

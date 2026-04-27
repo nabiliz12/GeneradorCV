@@ -6,6 +6,7 @@ const pagina = ref(1)
 const ponerFoto = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const fotoPerfil = ref<string | null>(null)
+const nuevaSkill = ref('')
 
 const form = reactive({
   datosPersonales: {
@@ -27,6 +28,7 @@ const form = reactive({
   certificaciones: [{ certificacion: '', expedicion: '' }],
   experiencia: [{ empresa: '', cargo: '', anioInicio: '', anioFin: '' }],
   idiomas: [{ idioma: '', nivel: '' }],
+  skills: [] as string[],
   foto: false,
   ofertaDeTrabajo: {
     empresa: '',
@@ -65,6 +67,23 @@ function eliminarCertificacion(index: number) { form.certificaciones.splice(inde
 
 function agregarExperiencia() { form.experiencia.push({ empresa: '', cargo: '', anioInicio: '', anioFin: '' }) }
 function eliminarExperiencia(index: number) { form.experiencia.splice(index, 1) }
+
+function agregarSkill() {
+  const skill = nuevaSkill.value.trim()
+  if (skill && !form.skills.includes(skill)) {
+    form.skills.push(skill)
+  }
+  nuevaSkill.value = ''
+}
+
+function agregarSkillConEnter(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    agregarSkill()
+  }
+}
+
+function eliminarSkill(index: number) { form.skills.splice(index, 1) }
 
 function subirFoto() { fileInput.value?.click() }
 
@@ -217,8 +236,41 @@ function onFileChange(event: Event) {
         </div>
       </div>
 
-      <!-- PAGE 6: Oferta de trabajo -->
+      <!-- PAGE 6: Skills -->
       <div v-if="pagina === 6">
+        <h1>Skills</h1>
+        <h2>Añade tus habilidades técnicas o personales</h2>
+
+        <!-- Tags visuales -->
+        <div v-if="form.skills.length > 0" class="skills-tags">
+          <span
+            v-for="(skill, index) in form.skills"
+            :key="index"
+            class="skill-tag"
+          >
+            {{ skill }}
+            <button @click="eliminarSkill(index)" type="button" class="skill-tag-remove">✕</button>
+          </span>
+        </div>
+
+        <!-- Input para nueva skill -->
+        <div class="skill-input-row">
+          <input
+            v-model="nuevaSkill"
+            placeholder="Ej: JavaScript, Trabajo en equipo..."
+            @keydown="agregarSkillConEnter"
+          />
+          <button @click="agregarSkill" type="button" class="btn-skill-add">+</button>
+        </div>
+
+        <div class="nav-buttons">
+          <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
+          <button @click="siguientePagina" type="button">Siguiente</button>
+        </div>
+      </div>
+
+      <!-- PAGE 7: Oferta de trabajo -->
+      <div v-if="pagina === 7">
         <h1>Oferta de trabajo</h1>
         <h2>Pega aquí la oferta a la que quieres aplicar para personalizar tu CV</h2>
         <div class="grid">
@@ -238,8 +290,8 @@ function onFileChange(event: Event) {
         </div>
       </div>
 
-      <!-- PAGE 7: ¿Foto? -->
-      <div v-if="pagina === 7">
+      <!-- PAGE 8: ¿Foto? -->
+      <div v-if="pagina === 8">
         <h1>Plantilla</h1>
         <h2>¿Quieres añadir una foto de perfil?</h2>
         <div class="nav-buttons">
@@ -249,8 +301,8 @@ function onFileChange(event: Event) {
         <button @click="anteriorPagina" type="button" class="secondary" style="margin-top: 8px;">Atrás</button>
       </div>
 
-      <!-- PAGE 8 CON FOTO -->
-      <div v-if="pagina === 8 && ponerFoto">
+      <!-- PAGE 9 CON FOTO -->
+      <div v-if="pagina === 9 && ponerFoto">
         <h1>Foto de perfil</h1>
         <button @click="subirFoto" type="button" class="secondary">Subir foto</button>
         <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="onFileChange" />
@@ -261,8 +313,8 @@ function onFileChange(event: Event) {
         </div>
       </div>
 
-      <!-- PAGE 8 SIN FOTO -->
-      <div v-if="pagina === 8 && !ponerFoto">
+      <!-- PAGE 9 SIN FOTO -->
+      <div v-if="pagina === 9 && !ponerFoto">
         <h1>Generando CV...</h1>
       </div>
 
@@ -474,6 +526,82 @@ label { font-size: 12px; color: #666; }
   background: transparent;
   transform: none;
   opacity: 1;
+}
+
+/* ── SKILLS ──────────────────────────────── */
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.skill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px 5px 12px;
+  background: #f3f4f6;
+  border: 1px solid #e7e7e7;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #111;
+  animation: fadeIn 0.2s ease;
+}
+
+.skill-tag-remove {
+  width: 16px !important;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: #ddd;
+  color: #666;
+  font-size: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-top: 0;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.skill-tag-remove:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  transform: none;
+  opacity: 1;
+}
+
+.skill-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.skill-input-row input {
+  flex: 1;
+}
+
+.btn-skill-add {
+  flex-shrink: 0;
+  width: 38px !important;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  background: #111;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-top: 0;
+  transition: opacity 0.2s;
+}
+.btn-skill-add:hover {
+  transform: translateY(-1px);
+  opacity: 0.85;
 }
 
 /* ── NAVEGACIÓN ──────────────────────────── */

@@ -1,0 +1,138 @@
+-- ============================================================
+--  Sistema de Generación de Currículums
+-- ============================================================
+
+CREATE DATABASE IF NOT EXISTS cv_generator
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE cv_generator;
+
+-- ------------------------------------------------------------
+-- USUARIO
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists USUARIO (
+  id_usuario    INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  nombre        VARCHAR(100)    NOT NULL,
+  apellidos     VARCHAR(150)    NOT NULL,
+  email         VARCHAR(255)    NOT NULL UNIQUE,
+  contrasena    VARCHAR(255)    NOT NULL,           -- hash bcrypt
+  fecha_creacion TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ------------------------------------------------------------
+-- OFERTA_EMPLEO
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists OFERTA_EMPLEO (
+  id_oferta     INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  titulo        VARCHAR(255)    NOT NULL,
+  empresa       VARCHAR(255)    NOT NULL,
+  descripcion   TEXT,
+  requisitos    TEXT
+);
+
+-- ------------------------------------------------------------
+-- CURRICULUM
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists CURRICULUM (
+  id_cv         INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  id_usuario    INT UNSIGNED    NOT NULL,
+  id_oferta     INT UNSIGNED,
+  titulo        VARCHAR(255),
+  fecha_creacion TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  hash_control  VARCHAR(64),                        -- SHA-256 del contenido generado
+  tiene_foto    TINYINT(1)      NOT NULL DEFAULT 0,
+
+  CONSTRAINT fk_cv_usuario  FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario)  ON DELETE CASCADE,
+  CONSTRAINT fk_cv_oferta   FOREIGN KEY (id_oferta)  REFERENCES OFERTA_EMPLEO(id_oferta) ON DELETE SET NULL
+);
+
+-- ------------------------------------------------------------
+-- DATOS_PERSONALES  (extiende CURRICULUM con los campos del form)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists  DATOS_PERSONALES (
+  id_datos          INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+  id_cv             INT UNSIGNED  NOT NULL UNIQUE,
+  telefono          VARCHAR(20),
+  direccion         VARCHAR(255),
+  codigo_postal     VARCHAR(10),
+  localidad         VARCHAR(100),
+  permiso_conducir  TINYINT(1)    NOT NULL DEFAULT 0,
+
+  CONSTRAINT fk_datos_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- EXPERIENCIA_LABORAL
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists  EXPERIENCIA_LABORAL (
+  id_experiencia  INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  id_cv           INT UNSIGNED    NOT NULL,
+  empresa         VARCHAR(255)    NOT NULL,
+  puesto          VARCHAR(255),                     -- "cargo" en el form
+  fecha_inicio    YEAR,
+  fecha_fin       YEAR,
+  descripcion     TEXT,
+
+  CONSTRAINT fk_exp_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- EDUCACION
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists  EDUCACION (
+  id_educacion  INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  id_cv         INT UNSIGNED    NOT NULL,
+  centro        VARCHAR(255),                       -- "institución" en el form
+  titulacion    VARCHAR(255),                       -- "título" en el form
+  fecha_inicio  YEAR,
+  fecha_fin     YEAR,
+
+  CONSTRAINT fk_edu_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- CERTIFICACION
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists  CERTIFICACION (
+  id_certificacion  INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+  id_cv             INT UNSIGNED  NOT NULL,
+  nombre            VARCHAR(255)  NOT NULL,
+  fecha_expedicion  VARCHAR(50),                    -- puede ser "2023", "Marzo 2023", etc.
+
+  CONSTRAINT fk_cert_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- IDIOMA
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists  IDIOMA (
+  id_idioma   INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  id_cv       INT UNSIGNED    NOT NULL,
+  nombre      VARCHAR(100)    NOT NULL,
+  nivel       ENUM('Básico','Intermedio','Avanzado','Nativo') NOT NULL DEFAULT 'Básico',
+
+  CONSTRAINT fk_idioma_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- HABILIDAD  (catálogo global de skills)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists  HABILIDAD (
+  id_habilidad  INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
+  nombre        VARCHAR(150)    NOT NULL UNIQUE
+);
+
+-- ------------------------------------------------------------
+-- CV_HABILIDAD  (tabla pivote N:M  CURRICULUM ↔ HABILIDAD)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT exists  CV_HABILIDAD (
+  id_cv         INT UNSIGNED    NOT NULL,
+  id_habilidad  INT UNSIGNED    NOT NULL,
+  PRIMARY KEY (id_cv, id_habilidad),
+
+  CONSTRAINT fk_cvh_cv         FOREIGN KEY (id_cv)        REFERENCES CURRICULUM(id_cv)   ON DELETE CASCADE,
+  CONSTRAINT fk_cvh_habilidad  FOREIGN KEY (id_habilidad) REFERENCES HABILIDAD(id_habilidad) ON DELETE CASCADE
+);
+
+
