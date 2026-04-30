@@ -53,6 +53,9 @@ CREATE TABLE IF NOT exists CURRICULUM (
 CREATE TABLE IF NOT exists  DATOS_PERSONALES (
   id_datos          INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
   id_cv             INT UNSIGNED  NOT NULL UNIQUE,
+  nombre            varchar(20),
+  Apellido          varchar(100),
+  email 			varchar(100),
   telefono          VARCHAR(20),
   direccion         VARCHAR(255),
   codigo_postal     VARCHAR(10),
@@ -61,7 +64,8 @@ CREATE TABLE IF NOT exists  DATOS_PERSONALES (
 
   CONSTRAINT fk_datos_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
 );
-
+ 
+ 
 -- ------------------------------------------------------------
 -- EXPERIENCIA_LABORAL
 -- ------------------------------------------------------------

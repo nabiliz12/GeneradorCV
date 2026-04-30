@@ -36,7 +36,7 @@ const router = createRouter({
       component: Registro,
     },
     {
-      path: '/forms/vista-previa',
+      path: '/forms/vista-previa/:id_cv',
       name: 'vistaprevia',
       component: VistaPreviaForm
     }

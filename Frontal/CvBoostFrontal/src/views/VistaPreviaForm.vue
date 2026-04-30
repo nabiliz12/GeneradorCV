@@ -1,20 +1,9 @@
 <script setup lang="ts">
-const props = defineProps<{
-  nombre?: string
-  apellido?: string
-  profesion?: string
-  email?: string
-  telefono?: string
-  direccion?: string
-  codigoPostal?: string
-  localidad?: string
-  permisoConducir?: boolean
-  foto?: string | null
-  educacion?: { institucion: string; titulo: string; anioInicio: string; anioFin: string }[]
-  certificaciones?: { certificacion: string; expedicion: string }[]
-  experiencia?: { empresa: string; cargo: string; anioInicio: string; anioFin: string }[]
-  idiomas?: { idioma: string; nivel: string }[]
-}>()
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute()
+const id_cv = route.params.id_cv
 
 function nivelADots(nivel: string): number {
   const map: Record<string, number> = {
@@ -35,11 +24,35 @@ function nivelACefr(nivel: string): string {
   }
   return map[nivel] ?? nivel
 }
+
+const cvData = ref<any>(null)
+const cargando = ref(true)
+const error = ref<string | null>(null)
+
+async function recogerDatos() {
+  try {
+    cargando.value = true
+    const response = await fetch(`http://127.0.0.1:8001/api/recuperar_cv/${id_cv}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!response.ok) throw new Error(`Error ${response.status}`)
+    cvData.value = await response.json()
+  } catch (e: any) {
+    error.value = e.message
+  } finally {
+    cargando.value = false
+  }
+}
+
+onMounted(() => recogerDatos())
 </script>
 
 <template>
-  <!-- Fondo gris igual que el body del HTML original -->
-  <div class="cv-page-bg">
+  <div v-if="cargando" style="text-align:center; padding: 40px;">Cargando CV...</div>
+  <div v-else-if="error" style="text-align:center; color:red; padding: 40px;">Error: {{ error }}</div>
+
+  <div v-else class="cv-page-bg">
     <div class="europass">
 
       <!-- ══ HEADER ══ -->
@@ -52,7 +65,7 @@ function nivelACefr(nivel: string): string {
           </div>
         </div>
 
-        <img v-if="foto" :src="foto" class="ep-photo" alt="Foto de perfil" />
+        <img v-if="cvData.foto" :src="cvData.foto" class="ep-photo" alt="Foto de perfil" />
         <div v-else class="ep-photo-placeholder">
           <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="20" cy="15" r="8" fill="#b0bec5"/>
@@ -64,14 +77,11 @@ function nivelACefr(nivel: string): string {
       <!-- ══ NOMBRE ══ -->
       <div class="ep-name-bar">
         <h1 class="ep-fullname">
-          {{ nombre }} <strong>{{ apellido }}</strong>
+          {{ cvData.datosPersonales.nombre }} <strong>{{ cvData.datosPersonales.Apellido }}</strong>
         </h1>
-        <p class="ep-profesion">{{ profesion }}</p>
+        <p class="ep-profesion">{{ cvData.datosPersonales.profesion }}</p>
         <div class="ep-stars">
-          <span class="ep-star">★</span><span class="ep-star">★</span><span class="ep-star">★</span>
-          <span class="ep-star">★</span><span class="ep-star">★</span><span class="ep-star">★</span>
-          <span class="ep-star">★</span><span class="ep-star">★</span><span class="ep-star">★</span>
-          <span class="ep-star">★</span><span class="ep-star">★</span><span class="ep-star">★</span>
+          <span v-for="n in 12" :key="n" class="ep-star">★</span>
         </div>
       </div>
 
@@ -91,22 +101,22 @@ function nivelACefr(nivel: string): string {
             <div class="ep-info-row">
               <span class="ep-info-label">Dirección</span>
               <span class="ep-info-value">
-                {{ direccion }}<br />
-                {{ codigoPostal }} {{ localidad }}
+                {{ cvData.datosPersonales.direccion }}<br />
+                {{ cvData.datosPersonales.codigo_postal }} {{ cvData.datosPersonales.localidad }}
               </span>
             </div>
 
             <div class="ep-info-row">
               <span class="ep-info-label">Teléfono</span>
-              <span class="ep-info-value">{{ telefono }}</span>
+              <span class="ep-info-value">{{ cvData.datosPersonales.telefono }}</span>
             </div>
 
             <div class="ep-info-row">
               <span class="ep-info-label">Correo electrónico</span>
-              <span class="ep-info-value ep-email">{{ email }}</span>
+              <span class="ep-info-value ep-email">{{ cvData.datosPersonales.email }}</span>
             </div>
 
-            <div v-if="permisoConducir" class="ep-info-row">
+            <div v-if="cvData.datosPersonales.permiso_conducir" class="ep-info-row">
               <span class="ep-info-label">Permiso de conducir</span>
               <span class="ep-info-value">B</span>
             </div>
@@ -119,8 +129,8 @@ function nivelACefr(nivel: string): string {
               Idiomas
             </div>
 
-            <div v-for="(lang, i) in idiomas" :key="i" class="ep-lang-row">
-              <div class="ep-lang-name">{{ lang.idioma }}</div>
+            <div v-for="(lang, i) in cvData.idiomas" :key="i" class="ep-lang-row">
+              <div class="ep-lang-name">{{ lang.nombre }}</div>
               <div class="ep-lang-cefr">{{ nivelACefr(lang.nivel) }}</div>
               <div class="ep-lang-dots">
                 <span
@@ -146,15 +156,15 @@ function nivelACefr(nivel: string): string {
             </div>
 
             <div class="ep-timeline">
-              <div v-for="(exp, i) in experiencia" :key="i" class="ep-timeline-item">
+              <div v-for="(exp, i) in cvData.experiencia" :key="i" class="ep-timeline-item">
                 <div class="ep-timeline-left">
                   <div class="ep-timeline-dot"></div>
                   <div class="ep-timeline-line"></div>
                 </div>
                 <div class="ep-timeline-content">
                   <div class="ep-entry-header">
-                    <span class="ep-entry-title">{{ exp.cargo }}</span>
-                    <span class="ep-entry-years">{{ exp.anioInicio }} — {{ exp.anioFin || 'Presente' }}</span>
+                    <span class="ep-entry-title">{{ exp.puesto }}</span>
+                    <span class="ep-entry-years">{{ exp.fecha_inicio }} — {{ exp.fecha_fin || 'Presente' }}</span>
                   </div>
                   <div class="ep-entry-subtitle">{{ exp.empresa }}</div>
                 </div>
@@ -170,7 +180,7 @@ function nivelACefr(nivel: string): string {
             </div>
 
             <div class="ep-timeline">
-              <div v-for="(edu, i) in educacion" :key="'edu-' + i" class="ep-timeline-item">
+              <div v-for="(edu, i) in cvData.educacion" :key="'edu-' + i" class="ep-timeline-item">
                 <div class="ep-timeline-left">
                   <div class="ep-timeline-dot"></div>
                   <div class="ep-timeline-line"></div>
@@ -184,7 +194,7 @@ function nivelACefr(nivel: string): string {
                 </div>
               </div>
 
-              <div v-for="(cert, i) in certificaciones" :key="'cert-' + i" class="ep-timeline-item">
+              <div v-for="(cert, i) in cvData.certificaciones" :key="'cert-' + i" class="ep-timeline-item">
                 <div class="ep-timeline-left">
                   <div class="ep-timeline-dot"></div>
                   <div class="ep-timeline-line"></div>
@@ -208,7 +218,7 @@ function nivelACefr(nivel: string): string {
           <span class="ep-footer-eu">EU</span>
           <span>© Unión Europea, 2002–2025 · europass.eu</span>
         </div>
-        <span>Curriculum Vitae de {{ nombre }} {{ apellido }}</span>
+        <span>Curriculum Vitae de {{ cvData.datosPersonales.nombre }} {{ cvData.datosPersonales.Apellido }}</span>
       </footer>
 
     </div>
@@ -218,7 +228,6 @@ function nivelACefr(nivel: string): string {
 <style scoped>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── FONDO GRIS, hoja centrada, igual que el body del HTML original ── */
 .cv-page-bg {
   background: #e8edf5;
   min-height: 100vh;
@@ -229,7 +238,6 @@ function nivelACefr(nivel: string): string {
   font-family: 'Source Sans 3', Arial, sans-serif;
 }
 
-/* ── HOJA A4 ── */
 .europass {
   width: 210mm;
   min-height: 297mm;
@@ -243,7 +251,6 @@ function nivelACefr(nivel: string): string {
   print-color-adjust: exact;
 }
 
-/* HEADER */
 .ep-header {
   background: #003399;
   display: flex;
@@ -306,7 +313,6 @@ function nivelACefr(nivel: string): string {
 
 .ep-photo-placeholder svg { width: 42px; height: 42px; opacity: 0.5; }
 
-/* NAME BAR */
 .ep-name-bar {
   background: #003399;
   padding: 10px 24px 18px 20px;
@@ -334,10 +340,8 @@ function nivelACefr(nivel: string): string {
 .ep-stars { display: flex; gap: 4px; margin-top: 8px; }
 .ep-star { color: #ffcc00; font-size: 8pt; }
 
-/* BODY */
 .ep-body { display: flex; flex: 1; }
 
-/* SIDEBAR */
 .ep-sidebar {
   width: 68mm;
   min-width: 68mm;
@@ -349,7 +353,6 @@ function nivelACefr(nivel: string): string {
   gap: 0;
 }
 
-/* MAIN */
 .ep-main {
   flex: 1;
   padding: 22px 24px;
@@ -357,7 +360,6 @@ function nivelACefr(nivel: string): string {
   flex-direction: column;
 }
 
-/* SECTIONS */
 .ep-section { margin-bottom: 20px; }
 
 .ep-section-title {
@@ -376,7 +378,6 @@ function nivelACefr(nivel: string): string {
 
 .ep-section-icon { font-size: 9pt; }
 
-/* INFO ROWS */
 .ep-info-row { display: flex; flex-direction: column; margin-bottom: 9px; }
 
 .ep-info-label {
@@ -390,7 +391,6 @@ function nivelACefr(nivel: string): string {
 .ep-info-value { font-size: 8.5pt; color: #222; line-height: 1.45; }
 .ep-email { color: #003399; word-break: break-all; }
 
-/* IDIOMAS */
 .ep-lang-row { margin-bottom: 10px; }
 .ep-lang-name { font-size: 8.5pt; font-weight: 600; color: #111; margin-bottom: 1px; }
 .ep-lang-cefr { font-size: 7pt; color: #6b7fa3; margin-bottom: 3px; }
@@ -407,7 +407,6 @@ function nivelACefr(nivel: string): string {
 
 .ep-dot.filled { background: #003399; }
 
-/* TIMELINE */
 .ep-timeline { position: relative; }
 
 .ep-timeline-item {
@@ -468,7 +467,6 @@ function nivelACefr(nivel: string): string {
 .ep-entry-subtitle { font-size: 8.5pt; color: #003399; font-weight: 600; margin-bottom: 3px; }
 .ep-entry-desc { font-size: 8.5pt; color: #555; line-height: 1.55; }
 
-/* FOOTER */
 .ep-footer {
   border-top: 1px solid #dde4f0;
   background: #f4f7fc;
@@ -496,7 +494,6 @@ function nivelACefr(nivel: string): string {
   justify-content: center;
 }
 
-/* PRINT */
 @media print {
   .cv-page-bg { background: none; padding: 0; }
   .europass { box-shadow: none; width: 100%; min-height: 100vh; }

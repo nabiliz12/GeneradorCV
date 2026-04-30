@@ -36,20 +36,31 @@ const form = reactive({
   }
 })
 
+
 async function enviarFormAlBack() {
-  console.log('Form submitted:', form)
   const response = await fetch('http://127.0.0.1:8001/api/formulario', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(form),
   })
-  if (response.ok) {
-    console.log('Form data successfully sent to the backend')
-    router.push('/forms/vista-previa')
-  } else {
-    console.error('Failed to send form data to the backend')
+
+  if (!response.ok) {
+    const errorDetail = await response.json()
+    console.error('Error del backend:', errorDetail)
+    return  // ← PARA aquí, no redirige
   }
+
+  const data = await response.json()
+
+  if (!data.id_cv) {
+    console.error('Backend no devolvió id_cv:', data)
+    return  // ← PARA aquí también
+  }
+
+  router.push(`/forms/vista-previa/${data.id_cv}`)
 }
+
+
 
 function siguientePagina() { pagina.value++ }
 function anteriorPagina() { pagina.value-- }
@@ -296,7 +307,8 @@ function onFileChange(event: Event) {
         <h2>¿Quieres añadir una foto de perfil?</h2>
         <div class="nav-buttons">
           <button type="button" @click="ponerFoto = true; siguientePagina()">Sí</button>
-          <button type="button" class="secondary" @click="ponerFoto = false; enviarFormAlBack(); siguientePagina()">No</button>
+          <button type="button" class="secondary" @click="ponerFoto = false; enviarFormAlBack()">No</button>
+
         </div>
         <button @click="anteriorPagina" type="button" class="secondary" style="margin-top: 8px;">Atrás</button>
       </div>
