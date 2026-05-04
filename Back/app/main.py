@@ -18,7 +18,7 @@ from app.models import FormDataModel
 # from sqlalchemy import create_engine, text
 # import os
 # from app.models import FormDataModel
-
+from app.routers import registro
 
 # & c:\Users\nabil.bouihia\CV_Boost\Back\.venv\Scripts\Activate.ps1
 #python -m uvicorn app.main:app --reload --port 8001
@@ -31,6 +31,8 @@ from app.models import FormDataModel
 app = FastAPI()
 
 app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"])
+
+app.include_router(registro.router,prefix="/api/auth", tags=["auth"])
 
 # conectar mongodb
 # MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")

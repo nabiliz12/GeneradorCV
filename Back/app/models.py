@@ -46,3 +46,13 @@ class FormDataModel(BaseModel):
     foto: bool
     ofertaDeTrabajo: OfertaDeTrabajo
 
+
+class Usuario(BaseModel):
+    nombre: str
+    apellidos: str
+    email: str
+    contrasena: str
+    
+class UsuarioLogin(BaseModel):
+    email: str
+    contrasena: str
