@@ -92,8 +92,3 @@ async def login(datos: UsuarioLogin):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Error al iniciar sesión")
 
-
-# ── EJEMPLO RUTA PROTEGIDA ───────────────────────────────────────────
-@router.get("/me")
-async def get_me(current_user: dict = Depends(get_current_user)):
-    return {"id_usuario": current_user["id_usuario"], "email": current_user["email"]}

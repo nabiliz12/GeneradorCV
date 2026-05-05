@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 function irAlFormulario() {
-  router.push('/forms')
+  router.push('/login')
 }
 </script>
 
@@ -23,7 +23,7 @@ function irAlFormulario() {
       Comenzar gratis
     </button>
 
-  
+
 
   </section>
 </template>

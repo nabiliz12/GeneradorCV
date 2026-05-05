@@ -18,7 +18,7 @@ function cerrarSesion() {
   localStorage.removeItem('nombre')
   estaLogueado.value = false
   menuAbierto.value = false
-  router.push('/login')
+  router.push('/')
 }
 </script>
 
@@ -37,13 +37,10 @@ function cerrarSesion() {
       </nav>
 
       <!-- SIN SESIÓN -->
-      <div v-if="!estaLogueado" class="auth-buttons">
-        <RouterLink to="/login" class="btn-ghost">Iniciar sesión</RouterLink>
-        <RouterLink to="/registro" class="btn-dark">Registrarse</RouterLink>
-      </div>
+
 
       <!-- CON SESIÓN -->
-      <div v-else class="user-menu">
+      <div v-if="estaLogueado" class="user-menu">
         <button class="avatar-btn" @click="menuAbierto = !menuAbierto" type="button">
           <div class="avatar-circle">{{ nombreUsuario[0]?.toUpperCase() }}</div>
           <span class="user-name">{{ nombreUsuario }}</span>

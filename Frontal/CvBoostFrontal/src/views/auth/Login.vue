@@ -20,7 +20,7 @@ async function verificarLogin() {
     const data = await res.json()
     localStorage.setItem('token', data.access_token)
     localStorage.setItem('nombre', data.nombre)
-    router.push('/forms')
+window.location.href = '/forms'
   } catch { error.value = 'Error de conexión' }
   finally { cargando.value = false }
 }
