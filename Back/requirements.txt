@@ -6,3 +6,8 @@ pymongo>=4.9,<5.0
 motor==3.7.1
 fpdf==1.7.2
 python-multipart==0.0.6
+
+# Auth / seguridad
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
