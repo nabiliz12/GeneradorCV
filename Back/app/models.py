@@ -11,27 +11,35 @@ class DatosPersonales(BaseModel):
     permisoConducir: bool
     
 class Educacion(BaseModel):
-    institucion: str
     titulo: str
-    anioInicio: str
-    anioFin: str
+    institucion: str
+    mesInicio: str = ''
+    anioInicio: str = ''
+    mesFin: str = ''
+    anioFin: str = ''
+    actualidad: bool = False
 
 class Certificacion(BaseModel):
     certificacion: str
-    expedicion: str
+    mes: str = ''
+    anio: str = ''
 
 class Experiencia(BaseModel):
-    empresa: str
     cargo: str
-    anioInicio: str
-    anioFin: str  
+    empresa: str
+    mesInicio: str = ''
+    anioInicio: str = ''
+    mesFin: str = ''
+    anioFin: str = ''
+    actualidad: bool = False
 
 class Idioma(BaseModel):
     idioma: str
     nivel: str
     
 class skills(BaseModel):
-    skill: str
+    skill: list[str]
+    
 class OfertaDeTrabajo(BaseModel):
     empresa: str
     descripcion: str
@@ -42,7 +50,7 @@ class FormDataModel(BaseModel):
     certificaciones: list[Certificacion]
     experiencia: list[Experiencia]
     idiomas: list[Idioma]
-    skills: list[skills]
+    skills: list[str]
     foto: bool
     ofertaDeTrabajo: OfertaDeTrabajo
 

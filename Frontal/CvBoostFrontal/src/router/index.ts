@@ -5,6 +5,7 @@ import Login from '@/views/auth/Login.vue'
 import Registro from '@/views/auth/Registro.vue'
 import HistorialFormularios from '@/views/HistorialFormularios.vue'
 import VistaPreviaForm from '@/views/VistaPreviaForm.vue'
+import Ajustes from '@/views/conSesion/ajustes.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +31,11 @@ const router = createRouter({
       name: 'login',
       component: Login,
     },
+      {
+          path: '/login/ajustes',
+          name: 'ajustes',
+          component: Ajustes,
+        },
     {
       path: '/registro',
       name: 'registro',
@@ -39,7 +45,7 @@ const router = createRouter({
       path: '/forms/vista-previa/:id_cv',
       name: 'vistaprevia',
       component: VistaPreviaForm
-    }
+    },
   ],
 })
 

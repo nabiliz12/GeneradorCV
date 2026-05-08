@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { d } from 'vue-router/dist/index-BzEKChPW.js'
 
 const router = useRouter()
 const estaLogueado = ref(false)
 const nombreUsuario = ref('')
 
-onMounted(() => {
+onMounted(async () => {
   estaLogueado.value = !!localStorage.getItem('token')
   nombreUsuario.value = localStorage.getItem('nombre') || ''
 })
@@ -38,6 +39,10 @@ function cerrarSesion() {
 
       <!-- SIN SESIÓN -->
 
+      <div v-if="!estaLogueado" class="auth-buttons">
+        <RouterLink to="/login" class="btn-ghost">Iniciar sesión</RouterLink>
+        <RouterLink to="/registro" class="btn-dark">Registrarse</RouterLink>
+      </div>
 
       <!-- CON SESIÓN -->
       <div v-if="estaLogueado" class="user-menu">
@@ -49,11 +54,14 @@ function cerrarSesion() {
 
         <div v-if="menuAbierto" class="dropdown">
           <div class="dropdown-item" @click="router.push('/forms/history'); menuAbierto = false">
-            📋 Mis CVs
+            Mis CVs
           </div>
           <div class="dropdown-divider"></div>
+          <div class="dropdown-item" @click="router.push('/login/ajustes'); menuAbierto = false">
+            Ajustes
+          </div>
           <div class="dropdown-item danger" @click="cerrarSesion">
-            🚪 Cerrar sesión
+            Cerrar sesión
           </div>
         </div>
 
@@ -91,7 +99,7 @@ function cerrarSesion() {
 
 .logo-section { display: flex; align-items: center; gap: 10px; }
 .logo-img { height: 38px; }
-.brand { font-weight: 800; font-size: 20px; }
+.brand { font-weight: 800; font-size: 20px; color: #111; }
 
 .navigation {
   position: absolute;
