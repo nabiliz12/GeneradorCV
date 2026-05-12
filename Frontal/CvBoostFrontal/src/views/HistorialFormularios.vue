@@ -65,6 +65,14 @@ function formatFecha(fecha: string) {
   })
 }
 
+function irAlFormulario() {
+  if (!localStorage.getItem('token')) {
+   return router.push('/login')
+  } else {
+   return router.push('/forms')
+  }
+}
+
 onMounted(() => cargarHistorial())
 </script>
 
@@ -73,7 +81,7 @@ onMounted(() => cargarHistorial())
     <div class="card">
       <div class="header">
         <h1>Mis CVs</h1>
-        <button class="btn-new" @click="router.push('/forms/formulario')">+ Nuevo CV</button>
+        <button class="btn-new" @click="irAlFormulario">+ Nuevo CV</button>
       </div>
 
       <!-- Estado: cargando -->
@@ -84,7 +92,7 @@ onMounted(() => cargarHistorial())
 
       <!-- Estado: error -->
       <div v-else-if="error" class="estado-centro estado-error">
-        <span>⚠️ {{ error }}</span>
+        <span>no se han encontrado CVs</span>
         <button class="btn-retry" @click="cargarHistorial">Reintentar</button>
       </div>
 

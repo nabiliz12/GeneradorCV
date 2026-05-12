@@ -38,13 +38,13 @@ async function recogerDatos() {
     })
     if (!response.ok) throw new Error(`Error ${response.status}`)
     cvData.value = await response.json()
+    console.log('CV DATA:', JSON.stringify(cvData.value, null, 2))  // <-- añade esto
   } catch (e: any) {
     error.value = e.message
   } finally {
     cargando.value = false
   }
 }
-
 onMounted(() => recogerDatos())
 </script>
 

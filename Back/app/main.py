@@ -6,9 +6,10 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
 from app.routers.auth import hashear_password, verificar_password
-
+import asyncio
 from app.models import FormDataModel
 from app.routers import registro
+from groq import Groq
 
 app = FastAPI()
 
@@ -151,6 +152,12 @@ async def guardarCV(datos: FormDataModel, current_user: dict = Depends(registro.
                     UPDATE CURRICULUM SET id_oferta = :id_oferta WHERE id_cv = :id_cv
                 """), {"id_oferta": oferta_result.lastrowid, "id_cv": id_cv})
 
+            #9 Implementación IA
+            textoDescripcion = await implementar_IA(datos.dict(),current_user)
+            db.execute(text("""
+                            UPDATE CURRICULUM SET descripcion = :textoDescripcion WHERE id_cv = :id_cv
+                            """), {"textoDescripcion": textoDescripcion, "id_cv": id_cv})
+
             db.commit()
 
         except Exception as e:
@@ -216,7 +223,7 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
             """), {"id_cv": id_cv}).fetchone()
 
             curriculum = db.execute(text("""
-                SELECT tiene_foto FROM CURRICULUM WHERE id_cv = :id_cv
+                SELECT tiene_foto, descripcion FROM CURRICULUM WHERE id_cv = :id_cv
             """), {"id_cv": id_cv}).fetchone()
 
         except HTTPException:
@@ -234,7 +241,8 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
         "idiomas": [dict(r._mapping) for r in idiomas],
         "skills": [r.nombre for r in skills],
         "ofertaDeTrabajo": dict(oferta._mapping) if oferta and oferta.empresa else {},
-        "foto": bool(curriculum.tiene_foto) if curriculum else False
+        "foto": bool(curriculum.tiene_foto) if curriculum else False,
+        "descripcion": curriculum.descripcion if curriculum else None
     }
 
 @app.get("/api/historial")
@@ -360,3 +368,47 @@ async def eliminar_cuenta(current_user: dict = Depends(registro.get_current_user
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
     return {"mensaje": "Cuenta eliminada"}
+
+
+async def implementar_IA(datos: dict, current_user: dict = None):
+    nombre = datos.get("datosPersonales", {}).get("nombre", "")
+    apellido = datos.get("datosPersonales", {}).get("apellido", "")
+    educacion = datos.get("educacion", [])
+    experiencia = datos.get("experiencia", [])
+    skills = datos.get("skills", [])
+    idiomas = datos.get("idiomas", [])
+    oferta = datos.get("ofertaDeTrabajo", {})
+
+    prompt = f"""
+    Eres un experto en recursos humanos. Escribe un párrafo de perfil profesional para el CV de {nombre} {apellido}.
+
+    Datos del candidato:
+    - Educación: {educacion}
+    - Experiencia: {experiencia}
+    - Skills: {skills}
+    - Idiomas: {idiomas}
+    {"- Orientado a este tipo de puesto: " + str(oferta.get("descripcion", "")) if oferta.get("descripcion") else ""}
+
+    Instrucciones estrictas:
+    - Escribe SOLO el párrafo, nada más
+    - 3-5 líneas máximo
+    - En primera persona
+    - Tono profesional pero natural, nada robótico
+    - Destaca las habilidades y experiencia más relevantes
+    - NO menciones nombres de empresas, organizaciones ni productos
+    - NO uses frases genéricas como "soy una persona apasionada y motivada"
+    - NO uses asteriscos, markdown, títulos ni explicaciones
+    - El resultado debe poder usarse en cualquier CV sin modificaciones
+    """
+
+    try:
+        client = Groq(api_key="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")
+        respuesta = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=300
+        )
+        return respuesta.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error en IA: {e}")
+        return ""

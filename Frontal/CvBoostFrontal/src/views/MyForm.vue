@@ -13,6 +13,26 @@ const progreso = computed(() => Math.round((pagina.value / totalPaginas) * 100))
 const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const aniosDisponibles = Array.from({ length: 50 }, (_, i) => String(new Date().getFullYear() - i))
 
+const plantillaSeleccionada = ref<'europass' | 'minimalista' | 'moderna'>('europass')
+
+const plantillas = [
+  {
+    id: 'europass',
+    label: 'Europass',
+    desc: 'Formato oficial europeo',
+  },
+  {
+    id: 'minimalista',
+    label: 'Minimalista',
+    desc: 'Limpio y tipográfico',
+  },
+  {
+    id: 'moderna',
+    label: 'Moderna',
+    desc: 'Dark sidebar con acento verde',
+  },
+]
+
 const form = reactive({
   datosPersonales: {
     nombre: '', apellido: '', email: '', telefono: '',
@@ -27,19 +47,10 @@ const form = reactive({
   ofertaDeTrabajo: { empresa: '', descripcion: '' }
 })
 
-const emailValido = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.datosPersonales.email))
-
 function eValido(val: string) { return val.trim().length > 0 }
-
 function estadoCampo(val: string): 'idle' | 'error' | 'ok' {
   if (!intentoAvanzar.value) return val.trim() ? 'ok' : 'idle'
   return val.trim() ? 'ok' : 'error'
-}
-
-function estadoEmail(): 'idle' | 'error' | 'ok' {
-  if (!intentoAvanzar.value) return form.datosPersonales.email.trim() ? (emailValido.value ? 'ok' : 'error') : 'idle'
-  if (!form.datosPersonales.email.trim()) return 'error'
-  return emailValido.value ? 'ok' : 'error'
 }
 
 function claseCampo(estado: 'idle' | 'error' | 'ok') {
@@ -47,18 +58,16 @@ function claseCampo(estado: 'idle' | 'error' | 'ok') {
   if (estado === 'ok') return 'field-ok'
   return ''
 }
-
 function paginaEsValida(num: number): boolean {
   if (num === 1) {
     return eValido(form.datosPersonales.nombre) &&
       eValido(form.datosPersonales.apellido) &&
-      eValido(form.datosPersonales.email) && emailValido.value &&
+      eValido(form.datosPersonales.email) &&
       eValido(form.datosPersonales.telefono) &&
       eValido(form.datosPersonales.direccion) &&
       eValido(form.datosPersonales.codigoPostal) &&
       eValido(form.datosPersonales.localidad)
   }
-  // Páginas 2-7: opcionales, siempre válidas
   return true
 }
 
@@ -66,12 +75,27 @@ async function guardarCV() {
   const response = await fetch('http://127.0.0.1:8001/api/cv', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-    body: JSON.stringify(form),
+    body: JSON.stringify({
+      ...form,
+      plantilla: plantillaSeleccionada.value,
+      foto: ponerFoto.value === true,           // siempre boolean: true o false
+      foto_base64: ponerFoto.value ? fotoPerfil.value : null,  // la imagen aparte
+    }),
   })
-  if (!response.ok) { console.error('Error del backend:', await response.json()); return }
+  if (!response.ok) {
+    const err = await response.json()
+    console.error('Error del backend:', JSON.stringify(err, null, 2))
+    return
+  }
   const data = await response.json()
   if (!data.id_cv) { console.error('Backend no devolvió id_cv:', data); return }
-  router.push(`/forms/vista-previa/${data.id_cv}`)
+
+  const rutas: Record<'europass' | 'minimalista' | 'moderna', string> = {
+    europass:    `/forms/plantilla-europass/${data.id_cv}`,
+    minimalista: `/forms/plantilla-minimalista/${data.id_cv}`,
+    moderna:     `/forms/plantilla-moderna/${data.id_cv}`,
+  }
+  router.push(rutas[plantillaSeleccionada.value])
 }
 
 function siguientePagina() {
@@ -80,7 +104,6 @@ function siguientePagina() {
   intentoAvanzar.value = false
   pagina.value++
 }
-
 function anteriorPagina() { intentoAvanzar.value = false; pagina.value-- }
 
 function agregarEducacion() { form.educacion.push({ titulo: '', institucion: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }) }
@@ -114,64 +137,56 @@ function onFileChange(event: Event) {
 <template>
   <div class="page">
     <div class="card">
-<!-- BARRA DE PROGRESO -->
-<div class="progress-wrap">
-  <div class="progress-header">
-    <span class="progress-step">Paso {{ pagina }} de {{ totalPaginas }}</span>
-    <span class="progress-pct">{{ progreso }}%</span>
-  </div>
-  <div class="progress-track">
-    <div class="progress-fill" :style="{ width: progreso + '%' }"></div>
-  </div>
-</div>
+
+      <!-- BARRA DE PROGRESO -->
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-step">Paso {{ pagina }} de {{ totalPaginas }}</span>
+          <span class="progress-pct">{{ progreso }}%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" :style="{ width: progreso + '%' }"></div>
+        </div>
+      </div>
+
       <!-- PAGE 1: Datos personales -->
       <div v-if="pagina === 1">
         <h1>Datos personales</h1>
         <div class="grid">
           <div class="row-2">
             <div class="field-wrap">
-              <input v-model="form.datosPersonales.nombre" placeholder="Nombre"
-                :class="claseCampo(estadoCampo(form.datosPersonales.nombre))" />
+              <input v-model="form.datosPersonales.nombre" placeholder="Nombre" :class="claseCampo(estadoCampo(form.datosPersonales.nombre))" />
               <span v-if="estadoCampo(form.datosPersonales.nombre) === 'error'" class="hint hint--error">Obligatorio</span>
             </div>
             <div class="field-wrap">
-              <input v-model="form.datosPersonales.apellido" placeholder="Apellido"
-                :class="claseCampo(estadoCampo(form.datosPersonales.apellido))" />
+              <input v-model="form.datosPersonales.apellido" placeholder="Apellido" :class="claseCampo(estadoCampo(form.datosPersonales.apellido))" />
               <span v-if="estadoCampo(form.datosPersonales.apellido) === 'error'" class="hint hint--error">Obligatorio</span>
             </div>
           </div>
           <div class="field-wrap">
-            <input v-model="form.datosPersonales.email" placeholder="Email" :class="claseCampo(estadoEmail())" />
-            <span v-if="estadoEmail() === 'error'" class="hint hint--error">
-              {{ !form.datosPersonales.email.trim() ? 'Obligatorio' : 'Formato no válido' }}
-            </span>
-            <span v-else-if="estadoEmail() === 'ok'" class="hint hint--ok">✓ Email válido</span>
+            <input v-model="form.datosPersonales.email" placeholder="Email" />
+
           </div>
           <div class="field-wrap">
-            <input v-model="form.datosPersonales.telefono" placeholder="Teléfono"
-              :class="claseCampo(estadoCampo(form.datosPersonales.telefono))" />
+            <input v-model="form.datosPersonales.telefono" placeholder="Teléfono" :class="claseCampo(estadoCampo(form.datosPersonales.telefono))" />
             <span v-if="estadoCampo(form.datosPersonales.telefono) === 'error'" class="hint hint--error">Obligatorio</span>
           </div>
           <div class="field-wrap">
-            <input v-model="form.datosPersonales.direccion" placeholder="Dirección"
-              :class="claseCampo(estadoCampo(form.datosPersonales.direccion))" />
+            <input v-model="form.datosPersonales.direccion" placeholder="Dirección" :class="claseCampo(estadoCampo(form.datosPersonales.direccion))" />
             <span v-if="estadoCampo(form.datosPersonales.direccion) === 'error'" class="hint hint--error">Obligatorio</span>
           </div>
           <div class="row-2">
             <div class="field-wrap">
-              <input v-model="form.datosPersonales.codigoPostal" placeholder="Código Postal"
-                :class="claseCampo(estadoCampo(form.datosPersonales.codigoPostal))" />
+              <input v-model="form.datosPersonales.codigoPostal" placeholder="Código Postal" :class="claseCampo(estadoCampo(form.datosPersonales.codigoPostal))" />
               <span v-if="estadoCampo(form.datosPersonales.codigoPostal) === 'error'" class="hint hint--error">Obligatorio</span>
             </div>
             <div class="field-wrap">
-              <input v-model="form.datosPersonales.localidad" placeholder="Localidad"
-                :class="claseCampo(estadoCampo(form.datosPersonales.localidad))" />
+              <input v-model="form.datosPersonales.localidad" placeholder="Localidad" :class="claseCampo(estadoCampo(form.datosPersonales.localidad))" />
               <span v-if="estadoCampo(form.datosPersonales.localidad) === 'error'" class="hint hint--error">Obligatorio</span>
             </div>
           </div>
           <div class="toggle-row">
             <div class="toggle-info">
-              <span class="toggle-icon">🚗</span>
               <div>
                 <span class="toggle-label">Permiso de conducir</span>
                 <span class="toggle-sub">Incluir en el CV</span>
@@ -197,32 +212,19 @@ function onFileChange(event: Event) {
               <div class="fecha-row">
                 <span class="fecha-label">Inicio</span>
                 <div class="fecha-selects">
-                  <select v-model="edu.mesInicio" class="chip-select-sm">
-                    <option value="">Mes</option>
-                    <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
-                  </select>
-                  <select v-model="edu.anioInicio" class="chip-select-sm">
-                    <option value="">Año</option>
-                    <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
-                  </select>
+                  <select v-model="edu.mesInicio" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
+                  <select v-model="edu.anioInicio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
                 </div>
               </div>
               <div class="fecha-row">
                 <span class="fecha-label">Fin</span>
                 <div class="fecha-selects">
                   <template v-if="!edu.actualidad">
-                    <select v-model="edu.mesFin" class="chip-select-sm" :disabled="edu.actualidad">
-                      <option value="">Mes</option>
-                      <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
-                    </select>
-                    <select v-model="edu.anioFin" class="chip-select-sm" :disabled="edu.actualidad">
-                      <option value="">Año</option>
-                      <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
-                    </select>
+                    <select v-model="edu.mesFin" class="chip-select-sm" :disabled="edu.actualidad"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
+                    <select v-model="edu.anioFin" class="chip-select-sm" :disabled="edu.actualidad"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
                   </template>
                   <label class="actualidad-check">
-                    <input type="checkbox" v-model="edu.actualidad"
-                      @change="if(edu.actualidad){ edu.mesFin=''; edu.anioFin='' }" />
+                    <input type="checkbox" v-model="edu.actualidad" @change="if(edu.actualidad){ edu.mesFin=''; edu.anioFin='' }" />
                     <span>Actualidad</span>
                   </label>
                 </div>
@@ -248,14 +250,8 @@ function onFileChange(event: Event) {
               <div class="fecha-row">
                 <span class="fecha-label">Expedición</span>
                 <div class="fecha-selects">
-                  <select v-model="cert.mes" class="chip-select-sm">
-                    <option value="">Mes</option>
-                    <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
-                  </select>
-                  <select v-model="cert.anio" class="chip-select-sm">
-                    <option value="">Año</option>
-                    <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
-                  </select>
+                  <select v-model="cert.mes" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
+                  <select v-model="cert.anio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
                 </div>
               </div>
             </div>
@@ -280,32 +276,19 @@ function onFileChange(event: Event) {
               <div class="fecha-row">
                 <span class="fecha-label">Inicio</span>
                 <div class="fecha-selects">
-                  <select v-model="exp.mesInicio" class="chip-select-sm">
-                    <option value="">Mes</option>
-                    <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
-                  </select>
-                  <select v-model="exp.anioInicio" class="chip-select-sm">
-                    <option value="">Año</option>
-                    <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
-                  </select>
+                  <select v-model="exp.mesInicio" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
+                  <select v-model="exp.anioInicio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
                 </div>
               </div>
               <div class="fecha-row">
                 <span class="fecha-label">Fin</span>
                 <div class="fecha-selects">
                   <template v-if="!exp.actualidad">
-                    <select v-model="exp.mesFin" class="chip-select-sm">
-                      <option value="">Mes</option>
-                      <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
-                    </select>
-                    <select v-model="exp.anioFin" class="chip-select-sm">
-                      <option value="">Año</option>
-                      <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
-                    </select>
+                    <select v-model="exp.mesFin" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
+                    <select v-model="exp.anioFin" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
                   </template>
                   <label class="actualidad-check">
-                    <input type="checkbox" v-model="exp.actualidad"
-                      @change="if(exp.actualidad){ exp.mesFin=''; exp.anioFin='' }" />
+                    <input type="checkbox" v-model="exp.actualidad" @change="if(exp.actualidad){ exp.mesFin=''; exp.anioFin='' }" />
                     <span>Actualidad</span>
                   </label>
                 </div>
@@ -332,10 +315,7 @@ function onFileChange(event: Event) {
             <div class="field-wrap" style="flex:0 0 130px">
               <select v-model="idioma.nivel" class="chip-select">
                 <option disabled value="">Nivel</option>
-                <option>Básico</option>
-                <option>Intermedio</option>
-                <option>Avanzado</option>
-                <option>Nativo</option>
+                <option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option>
               </select>
             </div>
             <button @click="eliminarIdioma(index)" type="button" class="chip-remove">✕</button>
@@ -359,8 +339,7 @@ function onFileChange(event: Event) {
           </span>
         </div>
         <div class="skill-input-row">
-          <input v-model="nuevaSkill" placeholder="Ej: JavaScript, Trabajo en equipo..."
-            @keydown="agregarSkillConEnter" />
+          <input v-model="nuevaSkill" placeholder="Ej: JavaScript, Trabajo en equipo..." @keydown="agregarSkillConEnter" />
           <button @click="agregarSkill" type="button" class="btn-skill-add">+</button>
         </div>
         <div class="nav-buttons">
@@ -379,8 +358,7 @@ function onFileChange(event: Event) {
           </div>
           <div class="form-group">
             <label>Descripción de la oferta</label>
-            <textarea v-model="form.ofertaDeTrabajo.descripcion"
-              placeholder="Pega aquí el texto de la oferta de trabajo..." rows="6"></textarea>
+            <textarea v-model="form.ofertaDeTrabajo.descripcion" placeholder="Pega aquí el texto de la oferta de trabajo..." rows="6"></textarea>
           </div>
         </div>
         <div class="nav-buttons">
@@ -389,32 +367,191 @@ function onFileChange(event: Event) {
         </div>
       </div>
 
-      <!-- PAGE 8: ¿Foto? -->
+      <!-- PAGE 8: Foto de perfil -->
       <div v-if="pagina === 8">
-        <h1>Plantilla</h1>
-        <h2>¿Quieres añadir una foto de perfil?</h2>
-        <div class="nav-buttons">
-          <button type="button" @click="ponerFoto = true; siguientePagina()">Sí</button>
-          <button type="button" class="secondary" @click="ponerFoto = false; guardarCV()">No</button>
+        <h1>Foto de perfil</h1>
+        <h2>¿Quieres añadir una foto a tu CV?</h2>
+
+        <div class="foto-opciones">
+          <button type="button" class="foto-opcion" :class="{ selected: ponerFoto }" @click="ponerFoto = true">
+            <span class="foto-opcion-label">Sí, añadir foto</span>
+          </button>
+          <button type="button" class="foto-opcion" :class="{ selected: !ponerFoto }" @click="ponerFoto = false">
+            <span class="foto-opcion-label">Sin foto</span>
+          </button>
         </div>
-        <button @click="anteriorPagina" type="button" class="secondary" style="margin-top: 8px;">Atrás</button>
+
+        <div v-if="ponerFoto" class="foto-upload-area">
+          <button @click="subirFoto" type="button" class="secondary">Subir foto</button>
+          <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="onFileChange" />
+          <img v-if="fotoPerfil" :src="fotoPerfil" class="avatar" />
+        </div>
+
+        <div class="nav-buttons" style="margin-top: 16px;">
+          <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
+          <button @click="siguientePagina" type="button">Siguiente</button>
+        </div>
       </div>
 
-      <!-- PAGE 9 CON FOTO -->
-      <div v-if="pagina === 9 && ponerFoto">
-        <h1>Foto de perfil</h1>
-        <button @click="subirFoto" type="button" class="secondary">Subir foto</button>
-        <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="onFileChange" />
-        <img v-if="fotoPerfil" :src="fotoPerfil" class="avatar" />
-        <div class="nav-buttons">
+      <!-- PAGE 9: Elegir plantilla -->
+      <div v-if="pagina === 9">
+        <h1>Elige tu plantilla</h1>
+        <h2>{{ ponerFoto ? 'Vista con foto de perfil' : 'Vista sin foto de perfil' }}</h2>
+
+        <div class="plantillas-grid">
+          <button
+            v-for="p in plantillas"
+            :key="p.id"
+            type="button"
+            class="plantilla-card"
+            :class="{ selected: plantillaSeleccionada === p.id }"
+            @click="plantillaSeleccionada = (p.id as any)"
+          >
+            <div class="plantilla-preview">
+              <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+
+                <!-- ── EUROPASS ── -->
+                <template v-if="p.id === 'europass'">
+                  <rect width="120" height="160" fill="#f4f7fc"/>
+                  <rect width="120" height="32" fill="#003399"/>
+                  <rect x="8" y="8" width="16" height="16" rx="8" fill="#ffcc00"/>
+                  <rect x="28" y="10" width="30" height="5" rx="2" fill="white" opacity="0.9"/>
+                  <rect x="28" y="18" width="20" height="3" rx="1" fill="#aac4f0"/>
+                  <template v-if="ponerFoto">
+                    <rect x="88" y="4" width="26" height="24" rx="1" fill="#1a3d7a"/>
+                    <circle cx="101" cy="12" r="5" fill="#b0bec5"/>
+                    <path d="M91 28 q10-8 20 0" fill="#b0bec5"/>
+                  </template>
+                  <template v-else>
+                    <rect x="88" y="6" width="24" height="20" fill="#1a3d7a" opacity="0.4"/>
+                  </template>
+                  <rect x="8" y="36" width="60" height="8" fill="#003399" opacity="0.15"/>
+                  <rect x="8" y="48" width="45" height="4" rx="1" fill="#003399" opacity="0.5"/>
+                  <rect x="8" y="56" width="30" height="3" rx="1" fill="#aac4f0"/>
+                  <rect x="0" y="68" width="42" height="92" fill="#f0f4fa"/>
+                  <rect x="42" y="68" width="1" height="92" fill="#dde4f0"/>
+                  <rect x="6" y="76" width="30" height="2" rx="1" fill="#003399" opacity="0.6"/>
+                  <rect x="6" y="82" width="22" height="2" rx="1" fill="#aaa"/>
+                  <rect x="6" y="88" width="26" height="2" rx="1" fill="#aaa"/>
+                  <rect x="6" y="94" width="18" height="2" rx="1" fill="#aaa"/>
+                  <circle cx="8" cy="104" r="2" fill="#003399" opacity="0.5"/>
+                  <circle cx="13" cy="104" r="2" fill="#003399" opacity="0.5"/>
+                  <circle cx="18" cy="104" r="2" fill="#003399"/>
+                  <circle cx="23" cy="104" r="2" fill="#003399"/>
+                  <circle cx="28" cy="104" r="2" fill="#003399"/>
+                  <rect x="48" y="76" width="40" height="2" rx="1" fill="#003399" opacity="0.7"/>
+                  <circle cx="52" cy="86" r="3" fill="#003399"/>
+                  <rect x="58" y="84" width="30" height="2" rx="1" fill="#333"/>
+                  <rect x="58" y="89" width="22" height="2" rx="1" fill="#aaa"/>
+                  <circle cx="52" cy="98" r="3" fill="#003399"/>
+                  <rect x="58" y="96" width="26" height="2" rx="1" fill="#333"/>
+                  <rect x="58" y="101" width="18" height="2" rx="1" fill="#aaa"/>
+                  <rect x="0" y="148" width="120" height="12" fill="#f0f4fa"/>
+                  <rect x="6" y="152" width="50" height="2" rx="1" fill="#aaa"/>
+                </template>
+
+                <!-- ── MINIMALISTA ── -->
+                <template v-if="p.id === 'minimalista'">
+                  <rect width="120" height="160" fill="white"/>
+                  <rect x="8" y="12" width="55" height="8" rx="1" fill="#111" opacity="0.85"/>
+                  <rect x="8" y="24" width="40" height="6" rx="1" fill="#111"/>
+                  <rect x="8" y="34" width="35" height="2" rx="1" fill="#999"/>
+                  <rect x="8" y="40" width="70" height="2" rx="1" fill="#ccc"/>
+                  <template v-if="ponerFoto">
+                    <circle cx="100" cy="22" r="14" fill="#e0e0e0"/>
+                    <circle cx="100" cy="17" r="5" fill="#b0bec5"/>
+                    <path d="M86 36 q14-10 28 0" fill="#b0bec5"/>
+                  </template>
+                  <template v-else>
+                    <circle cx="100" cy="22" r="14" fill="#f5f5f5" stroke="#eee" stroke-width="1"/>
+                    <line x1="94" y1="16" x2="106" y2="28" stroke="#ddd" stroke-width="1.5"/>
+                    <line x1="106" y1="16" x2="94" y2="28" stroke="#ddd" stroke-width="1.5"/>
+                  </template>
+                  <rect x="8" y="50" width="104" height="1" fill="#111"/>
+                  <rect x="8" y="58" width="40" height="2" rx="1" fill="#111" opacity="0.7"/>
+                  <rect x="8" y="64" width="55" height="2" rx="1" fill="#333"/>
+                  <rect x="8" y="69" width="35" height="2" rx="1" fill="#aaa"/>
+                  <rect x="8" y="77" width="50" height="2" rx="1" fill="#333"/>
+                  <rect x="8" y="82" width="30" height="2" rx="1" fill="#aaa"/>
+                  <rect x="8" y="90" width="40" height="2" rx="1" fill="#111" opacity="0.7"/>
+                  <rect x="8" y="96" width="52" height="2" rx="1" fill="#333"/>
+                  <rect x="8" y="101" width="38" height="2" rx="1" fill="#aaa"/>
+                  <rect x="8" y="109" width="48" height="2" rx="1" fill="#333"/>
+                  <rect x="8" y="114" width="28" height="2" rx="1" fill="#aaa"/>
+                  <rect x="76" y="58" width="36" height="2" rx="1" fill="#111" opacity="0.7"/>
+                  <rect x="76" y="65" width="28" height="2" rx="1" fill="#555"/>
+                  <rect x="76" y="70" width="22" height="1" rx="0.5" fill="#eee"/>
+                  <rect x="76" y="75" width="24" height="2" rx="1" fill="#555"/>
+                  <rect x="76" y="80" width="22" height="1" rx="0.5" fill="#eee"/>
+                  <rect x="76" y="90" width="36" height="2" rx="1" fill="#111" opacity="0.7"/>
+                  <rect x="76" y="97" width="26" height="2" rx="1" fill="#555"/>
+                  <rect x="76" y="102" width="22" height="1" rx="0.5" fill="#eee"/>
+                  <rect x="76" y="107" width="30" height="2" rx="1" fill="#555"/>
+                </template>
+
+                <!-- ── MODERNA ── -->
+                <template v-if="p.id === 'moderna'">
+                  <rect width="120" height="160" fill="white"/>
+                  <rect width="44" height="160" fill="#1b2333"/>
+                  <template v-if="ponerFoto">
+                    <circle cx="22" cy="24" r="14" fill="#2a3547"/>
+                    <circle cx="22" cy="24" r="14" fill="none" stroke="#00c896" stroke-width="2"/>
+                    <circle cx="22" cy="20" r="5" fill="#3d4a5c"/>
+                    <path d="M10 38 q12-8 24 0" fill="#3d4a5c"/>
+                  </template>
+                  <template v-else>
+                    <circle cx="22" cy="24" r="14" fill="#232d40"/>
+                    <circle cx="22" cy="24" r="14" fill="none" stroke="#00c896" stroke-width="2" stroke-dasharray="3 2"/>
+                    <line x1="16" y1="18" x2="28" y2="30" stroke="#3d4a5c" stroke-width="1.5"/>
+                    <line x1="28" y1="18" x2="16" y2="30" stroke="#3d4a5c" stroke-width="1.5"/>
+                  </template>
+                  <rect x="6" y="46" width="24" height="2" rx="1" fill="#00c896" opacity="0.8"/>
+                  <rect x="6" y="52" width="32" height="1.5" rx="0.5" fill="#c8d6e5" opacity="0.6"/>
+                  <rect x="6" y="57" width="28" height="1.5" rx="0.5" fill="#c8d6e5" opacity="0.6"/>
+                  <rect x="6" y="62" width="30" height="1.5" rx="0.5" fill="#c8d6e5" opacity="0.6"/>
+                  <rect x="6" y="72" width="20" height="2" rx="1" fill="#00c896" opacity="0.8"/>
+                  <rect x="6" y="78" width="32" height="1.5" rx="0.5" fill="#c8d6e5" opacity="0.5"/>
+                  <rect x="6" y="82" width="20" height="2" rx="1" fill="#00c896" opacity="0.4"/>
+                  <rect x="6" y="88" width="32" height="1.5" rx="0.5" fill="#c8d6e5" opacity="0.5"/>
+                  <rect x="6" y="92" width="24" height="2" rx="1" fill="#00c896" opacity="0.4"/>
+                  <rect x="6" y="102" width="18" height="2" rx="1" fill="#00c896" opacity="0.8"/>
+                  <rect x="6" y="108" width="14" height="5" rx="2" fill="#00c896" opacity="0.15" stroke="#00c896" stroke-width="0.5"/>
+                  <rect x="22" y="108" width="16" height="5" rx="2" fill="#00c896" opacity="0.15" stroke="#00c896" stroke-width="0.5"/>
+                  <rect x="6" y="116" width="18" height="5" rx="2" fill="#00c896" opacity="0.15" stroke="#00c896" stroke-width="0.5"/>
+                  <rect x="50" y="14" width="50" height="6" rx="1" fill="#111" opacity="0.8"/>
+                  <rect x="50" y="24" width="35" height="2" rx="1" fill="#888"/>
+                  <rect x="50" y="30" width="20" height="2" rx="1" fill="#00c896"/>
+                  <rect x="50" y="40" width="45" height="2" rx="1" fill="#333" opacity="0.7"/>
+                  <rect x="50" y="45" width="60" height="0.5" fill="#eee"/>
+                  <circle cx="53" cy="54" r="2.5" fill="#00c896"/>
+                  <rect x="58" y="52" width="32" height="2" rx="1" fill="#111"/>
+                  <rect x="58" y="57" width="22" height="2" rx="1" fill="#00c896" opacity="0.7"/>
+                  <circle cx="53" cy="68" r="2.5" fill="#00c896"/>
+                  <rect x="58" y="66" width="28" height="2" rx="1" fill="#111"/>
+                  <rect x="58" y="71" width="18" height="2" rx="1" fill="#00c896" opacity="0.7"/>
+                  <rect x="50" y="84" width="45" height="2" rx="1" fill="#333" opacity="0.7"/>
+                  <rect x="50" y="89" width="60" height="0.5" fill="#eee"/>
+                  <circle cx="53" cy="98" r="2.5" fill="#00c896"/>
+                  <rect x="58" y="96" width="30" height="2" rx="1" fill="#111"/>
+                  <rect x="58" y="101" width="20" height="2" rx="1" fill="#00c896" opacity="0.7"/>
+                </template>
+
+              </svg>
+            </div>
+
+            <div class="plantilla-check" v-if="plantillaSeleccionada === p.id">✓</div>
+
+            <div class="plantilla-info">
+              <span class="plantilla-name">{{ p.label }}</span>
+              <span class="plantilla-desc">{{ p.desc }}</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="nav-buttons" style="margin-top: 20px;">
           <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
           <button @click="guardarCV()" type="button">Generar CV</button>
         </div>
-      </div>
-
-      <!-- PAGE 9 SIN FOTO -->
-      <div v-if="pagina === 9 && !ponerFoto">
-        <h1>Generando CV...</h1>
       </div>
 
     </div>
@@ -423,239 +560,145 @@ function onFileChange(event: Event) {
 
 <style scoped>
 .page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, #f7f7f8, #ffffff);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
   padding: 40px 16px;
 }
 .card {
-  width: 100%;
-  max-width: 480px;
-  background: white;
-  padding: 28px;
-  border-radius: 16px;
-  border: 1px solid #eee;
+  width: 100%; max-width: 480px; background: white;
+  padding: 28px; border-radius: 16px; border: 1px solid #eee;
   box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 h1 { font-size: 18px; font-weight: 600; margin-bottom: 22px; color: #111; display: flex; align-items: center; gap: 8px; }
 h2 { font-size: 14px; font-weight: 500; color: #555; margin-bottom: 16px; }
 
-.opcional-badge {
-  font-size: 11px; font-weight: 500;
-  background: #f3f4f6; color: #888;
-  border-radius: 6px; padding: 2px 8px;
-  letter-spacing: 0.3px;
-}
-
+.opcional-badge { font-size: 11px; font-weight: 500; background: #f3f4f6; color: #888; border-radius: 6px; padding: 2px 8px; }
 .grid { display: flex; flex-direction: column; gap: 12px; }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field-wrap { display: flex; flex-direction: column; gap: 3px; }
 .hint { font-size: 11.5px; font-weight: 500; padding-left: 2px; animation: hintIn 0.15s ease; }
 .hint--error { color: #d97706; }
-.hint--ok    { color: #16a34a; }
-@keyframes hintIn {
-  from { opacity: 0; transform: translateY(-2px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+.hint--ok { color: #16a34a; }
+@keyframes hintIn { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }
 
 input, select, textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1.5px solid #e7e7e7;
-  border-radius: 10px;
-  font-size: 14px;
-  background: #fafafa;
-  transition: border-color 0.2s, background 0.2s;
-  outline: none;
-  font-family: inherit;
-  box-sizing: border-box;
+  width: 100%; padding: 10px 12px; border: 1.5px solid #e7e7e7;
+  border-radius: 10px; font-size: 14px; background: #fafafa;
+  transition: border-color 0.2s, background 0.2s; outline: none;
+  font-family: inherit; box-sizing: border-box;
 }
 textarea { resize: vertical; min-height: 100px; }
 input:focus, select:focus, textarea:focus { border-color: #111; background: white; }
 input::placeholder, textarea::placeholder { color: #aaa; }
 .field-error { border-color: #f59e0b !important; background: #fffbeb !important; }
-.field-ok    { border-color: #4ade80 !important; background: #f0fdf4 !important; }
+.field-ok { border-color: #4ade80 !important; background: #f0fdf4 !important; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 label { font-size: 12px; color: #666; }
 
-/* ── TOGGLE ── */
-.toggle-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; border: 1px solid #e7e7e7; border-radius: 12px;
-  background: #fafafa; transition: border-color 0.2s;
-}
-.toggle-row:hover { border-color: #ccc; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1px solid #e7e7e7; border-radius: 12px; background: #fafafa; }
 .toggle-info { display: flex; align-items: center; gap: 10px; }
 .toggle-icon { font-size: 18px; }
 .toggle-label { display: block; font-size: 14px; font-weight: 500; color: #111; }
 .toggle-sub { display: block; font-size: 11px; color: #999; margin-top: 1px; }
 .toggle-switch { position: relative; display: inline-flex; cursor: pointer; }
 .toggle-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
-.toggle-track {
-  width: 42px; height: 24px; background: #e0e0e0;
-  border-radius: 999px; position: relative; transition: background 0.25s ease; display: block;
-}
-.toggle-thumb {
-  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
-  border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  transition: transform 0.25s ease;
-}
+.toggle-track { width: 42px; height: 24px; background: #e0e0e0; border-radius: 999px; position: relative; transition: background 0.25s; display: block; }
+.toggle-thumb { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: transform 0.25s; }
 .toggle-switch input:checked + .toggle-track { background: #111; }
 .toggle-switch input:checked + .toggle-track .toggle-thumb { transform: translateX(18px); }
 
-/* ── CHIPS ── */
 .chips-list { display: flex; flex-direction: column; gap: 8px; }
-.item-chip {
-  display: flex; align-items: flex-start; gap: 8px;
-  padding: 10px 12px; border: 1px solid #efefef;
-  border-radius: 12px; background: #fafafa; transition: border-color 0.2s;
-}
-.item-chip:hover { border-color: #ddd; }
+.item-chip { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid #efefef; border-radius: 12px; background: #fafafa; }
 .item-chip--row { flex-direction: row; align-items: flex-start; }
 .chip-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-
-.chip-input {
-  width: 100%; padding: 7px 10px;
-  border: 1.5px solid #e7e7e7; border-radius: 8px;
-  font-size: 13px; background: white; outline: none;
-  box-sizing: border-box; transition: border-color 0.2s;
-}
+.chip-input { width: 100%; padding: 7px 10px; border: 1.5px solid #e7e7e7; border-radius: 8px; font-size: 13px; background: white; outline: none; box-sizing: border-box; }
 .chip-input:focus { border-color: #111; }
-
-/* ── Fecha con selectores ── */
-.fecha-row {
-  display: flex; align-items: center; gap: 8px;
-}
-.fecha-label {
-  font-size: 11.5px; color: #888; font-weight: 500;
-  white-space: nowrap; min-width: 38px;
-}
-.fecha-selects {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-}
-.chip-select-sm {
-  padding: 6px 8px;
-  border: 1.5px solid #e7e7e7; border-radius: 8px;
-  font-size: 12px; background: white; outline: none;
-  cursor: pointer; transition: border-color 0.2s;
-  width: auto;
-}
+.fecha-row { display: flex; align-items: center; gap: 8px; }
+.fecha-label { font-size: 11.5px; color: #888; font-weight: 500; white-space: nowrap; min-width: 38px; }
+.fecha-selects { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.chip-select-sm { padding: 6px 8px; border: 1.5px solid #e7e7e7; border-radius: 8px; font-size: 12px; background: white; outline: none; cursor: pointer; width: auto; }
 .chip-select-sm:focus { border-color: #111; }
-.chip-select-sm:disabled { background: #f3f4f6; color: #bbb; cursor: not-allowed; }
-
-/* ── Actualidad checkbox ── */
-.actualidad-check {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 12px; color: #555; cursor: pointer;
-  white-space: nowrap;
-}
-.actualidad-check input[type="checkbox"] {
-  width: 14px; height: 14px; padding: 0;
-  border: 1.5px solid #ccc; border-radius: 4px;
-  background: white; cursor: pointer;
-  accent-color: #111;
-}
-
-.chip-select {
-  width: 100%; padding: 7px 8px;
-  border: 1.5px solid #e7e7e7; border-radius: 8px;
-  font-size: 13px; background: white; outline: none;
-  transition: border-color 0.2s; box-sizing: border-box;
-}
-.chip-select:focus { border-color: #111; }
-
-.chip-remove {
-  flex-shrink: 0; width: 26px !important; height: 26px;
-  border-radius: 50%; border: none; background: #f3f4f6; color: #999;
-  font-size: 11px; cursor: pointer; display: flex; align-items: center;
-  justify-content: center; padding: 0; margin-top: 2px; transition: background 0.2s, color 0.2s;
-}
+.chip-select-sm:disabled { background: #f3f4f6; color: #bbb; }
+.actualidad-check { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #555; cursor: pointer; white-space: nowrap; }
+.actualidad-check input[type="checkbox"] { width: 14px; height: 14px; padding: 0; accent-color: #111; }
+.chip-select { width: 100%; padding: 7px 8px; border: 1.5px solid #e7e7e7; border-radius: 8px; font-size: 13px; background: white; outline: none; box-sizing: border-box; }
+.chip-remove { flex-shrink: 0; width: 26px !important; height: 26px; border-radius: 50%; border: none; background: #f3f4f6; color: #999; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; margin-top: 2px; }
 .chip-remove:hover { background: #fee2e2; color: #b91c1c; transform: none; opacity: 1; }
-
-.btn-add {
-  background: transparent; color: #777; border: 1.5px dashed #ddd;
-  padding: 8px 14px; border-radius: 10px; font-size: 13px;
-  cursor: pointer; margin-top: 8px; width: 100%; transition: border-color 0.2s, color 0.2s;
-}
+.btn-add { background: transparent; color: #777; border: 1.5px dashed #ddd; padding: 8px 14px; border-radius: 10px; font-size: 13px; cursor: pointer; margin-top: 8px; width: 100%; }
 .btn-add:hover { border-color: #111; color: #111; background: transparent; transform: none; opacity: 1; }
 
-/* ── SKILLS ── */
 .skills-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.skill-tag {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px 5px 12px; background: #f3f4f6;
-  border: 1px solid #e7e7e7; border-radius: 999px; font-size: 13px; color: #111;
-}
-.skill-tag-remove {
-  width: 16px !important; height: 16px; border-radius: 50%; border: none;
-  background: #ddd; color: #666; font-size: 9px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0; margin-top: 0; transition: background 0.2s, color 0.2s; flex-shrink: 0;
-}
-.skill-tag-remove:hover { background: #fee2e2; color: #b91c1c; transform: none; opacity: 1; }
+.skill-tag { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px 5px 12px; background: #f3f4f6; border: 1px solid #e7e7e7; border-radius: 999px; font-size: 13px; color: #111; }
+.skill-tag-remove { width: 16px !important; height: 16px; border-radius: 50%; border: none; background: #ddd; color: #666; font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
 .skill-input-row { display: flex; gap: 8px; align-items: center; }
 .skill-input-row input { flex: 1; }
-.btn-skill-add {
-  flex-shrink: 0; width: 38px !important; height: 38px;
-  border-radius: 10px; border: none; background: #111; color: white;
-  font-size: 20px; cursor: pointer; display: flex; align-items: center;
-  justify-content: center; padding: 0; margin-top: 0; transition: opacity 0.2s;
-}
-.btn-skill-add:hover { transform: translateY(-1px); opacity: 0.85; }
-/* ── BARRA DE PROGRESO ── */
-.progress-wrap {
-  margin-bottom: 24px;
-}
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-.progress-step {
-  font-size: 12px;
-  color: #999;
-  font-weight: 500;
-}
-.progress-pct {
-  font-size: 12px;
-  color: #111;
-  font-weight: 600;
-}
-.progress-track {
-  width: 100%;
-  height: 4px;
-  background: #f0f0f0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: #111;
-  border-radius: 999px;
-  transition: width 0.35s ease;
-}
-/* ── NAV ── */
+.btn-skill-add { flex-shrink: 0; width: 38px !important; height: 38px; border-radius: 10px; border: none; background: #111; color: white; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; margin-top: 0; }
+
+/* PROGRESO */
+.progress-wrap { margin-bottom: 24px; }
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.progress-step { font-size: 12px; color: #999; font-weight: 500; }
+.progress-pct { font-size: 12px; color: #111; font-weight: 600; }
+.progress-track { width: 100%; height: 4px; background: #f0f0f0; border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: #111; border-radius: 999px; transition: width 0.35s ease; }
+
+/* NAV */
 .nav-buttons { display: flex; gap: 10px; margin-top: 16px; }
 .nav-buttons button { flex: 1; margin-top: 0; }
 button {
-  border: none; background: #111; color: white;
-  padding: 10px 14px; border-radius: 10px; font-size: 14px;
-  cursor: pointer; margin-top: 12px; transition: 0.2s; width: 100%;
+  border: none; background: #111; color: white; padding: 10px 14px;
+  border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 12px;
+  transition: 0.2s; width: 100%;
 }
 button:hover { transform: translateY(-1px); opacity: 0.9; }
 button.secondary { background: #f3f4f6; color: #111; }
 
-.avatar {
-  width: 90px; height: 90px; border-radius: 14px;
-  object-fit: cover; margin-top: 12px; border: 1px solid #eee; display: block;
+/* SELECTOR DE PLANTILLA */
+.plantillas-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
 }
+.plantilla-card {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 10px 8px 12px; border: 2px solid #e7e7e7;
+  border-radius: 14px; background: #fafafa; cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  width: 100%; margin: 0;
+}
+.plantilla-card:hover { border-color: #999; background: white; transform: none; opacity: 1; }
+.plantilla-card.selected { border-color: #111; background: white; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+
+.plantilla-preview {
+  width: 100%; aspect-ratio: 3/4; overflow: hidden; border-radius: 6px;
+  border: 1px solid #eee; background: white;
+}
+.plantilla-preview svg { width: 100%; height: 100%; display: block; }
+
+.plantilla-check {
+  position: absolute; top: 8px; right: 8px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #111; color: white; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.plantilla-info { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.plantilla-name { font-size: 12px; font-weight: 700; color: #111; }
+.plantilla-desc { font-size: 10px; color: #999; text-align: center; line-height: 1.3; }
+
+/* FOTO */
+.foto-opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.foto-opcion {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 16px 10px; border: 2px solid #e7e7e7; border-radius: 14px;
+  background: #fafafa; cursor: pointer; transition: all 0.2s;
+  margin: 0; width: 100%;
+}
+.foto-opcion:hover { border-color: #999; background: white; transform: none; opacity: 1; }
+.foto-opcion.selected { border-color: #111; background: white; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+.foto-opcion-icon { font-size: 22px; }
+.foto-opcion-label { font-size: 13px; font-weight: 600; color: #111; }
+.foto-upload-area { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; border: 1px dashed #ddd; border-radius: 12px; background: #fafafa; }
+
+.avatar { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 1px solid #eee; display: block; }
 .card > div { animation: fadeIn 0.25s ease; }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 </style>

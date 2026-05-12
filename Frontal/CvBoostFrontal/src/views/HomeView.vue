@@ -4,7 +4,11 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 function irAlFormulario() {
-  router.push('/login')
+  if (!localStorage.getItem('token')) {
+    router.push('/login')
+  } else {
+    router.push('/forms')
+  }
 }
 </script>
 

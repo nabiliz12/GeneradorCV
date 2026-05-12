@@ -65,7 +65,6 @@ CREATE TABLE IF NOT exists  DATOS_PERSONALES (
   CONSTRAINT fk_datos_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
 );
  
- 
 -- ------------------------------------------------------------
 -- EXPERIENCIA_LABORAL
 -- ------------------------------------------------------------
@@ -74,8 +73,8 @@ CREATE TABLE IF NOT exists  EXPERIENCIA_LABORAL (
   id_cv           INT UNSIGNED    NOT NULL,
   empresa         VARCHAR(255)    NOT NULL,
   puesto          VARCHAR(255),                     -- "cargo" en el form
-  fecha_inicio    YEAR,
-  fecha_fin       YEAR,
+fecha_inicio VARCHAR(50),
+  fecha_fin VARCHAR(50),
   descripcion     TEXT,
 
   CONSTRAINT fk_exp_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
@@ -87,22 +86,21 @@ CREATE TABLE IF NOT exists  EXPERIENCIA_LABORAL (
 CREATE TABLE IF NOT exists  EDUCACION (
   id_educacion  INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
   id_cv         INT UNSIGNED    NOT NULL,
-  centro        VARCHAR(255),                       -- "institución" en el form
-  titulacion    VARCHAR(255),                       -- "título" en el form
-  fecha_inicio  YEAR,
-  fecha_fin     YEAR,
+  institucion    VARCHAR(255),                       -- "institución" en el form
+  titulo    VARCHAR(255),                       -- "título" en el form
+  anioInicio  VARCHAR(50),
+  anioFin     VARCHAR(50);
 
   CONSTRAINT fk_edu_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
 );
-
 -- ------------------------------------------------------------
 -- CERTIFICACION
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT exists  CERTIFICACION (
   id_certificacion  INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
   id_cv             INT UNSIGNED  NOT NULL,
-  nombre            VARCHAR(255)  NOT NULL,
-  fecha_expedicion  VARCHAR(50),                    -- puede ser "2023", "Marzo 2023", etc.
+  certificacion     VARCHAR(255)  NOT NULL,
+  expedicion  VARCHAR(50),                    -- puede ser "2023", "Marzo 2023", etc.
 
   CONSTRAINT fk_cert_cv FOREIGN KEY (id_cv) REFERENCES CURRICULUM(id_cv) ON DELETE CASCADE
 );

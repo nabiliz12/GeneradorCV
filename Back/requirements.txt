@@ -11,3 +11,5 @@ python-multipart==0.0.6
 python-jose[cryptography]
 passlib[bcrypt]
 bcrypt
+pip install fastapi uvicorn httpx pydantic
+pip install ollama
