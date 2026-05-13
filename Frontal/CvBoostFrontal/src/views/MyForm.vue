@@ -2,38 +2,39 @@
 import router from '@/router'
 import { reactive, ref, computed } from 'vue'
 
-const pagina = ref(1)
-const ponerFoto = ref(false)
-const fileInput = ref<HTMLInputElement | null>(null)
-const fotoPerfil = ref<string | null>(null)
+const pagina = ref(1) // para saber en que pagina estoy
+const ponerFoto = ref(false) // para saber si el usuario quiere foto o no, así se la pasamos al backend y él decide si la incluye o no en el CV generado
+const fileInput = ref<HTMLInputElement | null>(null) // referencia al input file para subir foto
+const fotoPerfil = ref<string | null>(null) // para almacenar la foto de perfil en base64
 const nuevaSkill = ref('')
-const intentoAvanzar = ref(false)
-const totalPaginas = 9
-const progreso = computed(() => Math.round((pagina.value / totalPaginas) * 100))
+const intentoAvanzar = ref(false) // que rellene lo que tenga que rellenar para poder pasar a la siguiente pagina
+const totalPaginas = 9 // es el total de paginas
+const progreso = computed(() => Math.round((pagina.value / totalPaginas) * 100)) //
 const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
-const aniosDisponibles = Array.from({ length: 50 }, (_, i) => String(new Date().getFullYear() - i))
+const aniosDisponibles = Array.from({ length: 50 }, (_, i) => String(new Date().getFullYear() - i))// crea un array de los ultimos 50 años para los selects de fechas
 
 const plantillaSeleccionada = ref<'europass' | 'minimalista' | 'moderna'>('europass')
 
 const plantillas = [
-  {
-    id: 'europass',
-    label: 'Europass',
-    desc: 'Formato oficial europeo',
-  },
-  {
-    id: 'minimalista',
-    label: 'Minimalista',
-    desc: 'Limpio y tipográfico',
-  },
-  {
-    id: 'moderna',
-    label: 'Moderna',
-    desc: 'Dark sidebar con acento verde',
-  },
+  { id: 'europass',    label: 'Europass',    desc: 'Formato oficial europeo' },
+  { id: 'minimalista', label: 'Minimalista', desc: 'Limpio y sencillo' },
+  { id: 'moderna',     label: 'Moderna',     desc: 'Dark sidebar con acento verde' },
 ]
 
-const form = reactive({
+// ── CARGA IA ──
+const cargando = ref(false)
+const mensajesCarga = [
+  'Analizando tu perfil...',
+  'Redactando el perfil profesional...',
+  'Ajustando el tono y estilo...',
+  'Aplicando el formato final...',
+  'Casi listo...'
+]
+
+const mensajeCargaActual = ref(mensajesCarga[0])
+let intervaloMensajes: ReturnType<typeof setInterval> | null = null
+
+const formulario = reactive({
   datosPersonales: {
     nombre: '', apellido: '', email: '', telefono: '',
     direccion: '', codigoPostal: '', localidad: '', permisoConducir: false
@@ -47,55 +48,72 @@ const form = reactive({
   ofertaDeTrabajo: { empresa: '', descripcion: '' }
 })
 
-function eValido(val: string) { return val.trim().length > 0 }
-function estadoCampo(val: string): 'idle' | 'error' | 'ok' {
+function esValido(val: string) { return val.trim().length > 0 } // para los campos obligatorios de la primera pagina, si el campo tiene texto se considera ok, si no, error (si se ha intentado avanzar) o idle (si no se ha intentado avanzar aun)
+
+function estadoCampo(val: string): 'idle' | 'error' | 'ok' { // devuelve el estado del campo para mostrar borde rojo o verde o ninguno
   if (!intentoAvanzar.value) return val.trim() ? 'ok' : 'idle'
   return val.trim() ? 'ok' : 'error'
 }
-
-function claseCampo(estado: 'idle' | 'error' | 'ok') {
+function claseCampo(estado: 'idle' | 'error' | 'ok') { // devuelve la clase css segun el estado del campo
   if (estado === 'error') return 'field-error'
   if (estado === 'ok') return 'field-ok'
   return ''
 }
+
 function paginaEsValida(num: number): boolean {
   if (num === 1) {
-    return eValido(form.datosPersonales.nombre) &&
-      eValido(form.datosPersonales.apellido) &&
-      eValido(form.datosPersonales.email) &&
-      eValido(form.datosPersonales.telefono) &&
-      eValido(form.datosPersonales.direccion) &&
-      eValido(form.datosPersonales.codigoPostal) &&
-      eValido(form.datosPersonales.localidad)
+    return esValido(formulario.datosPersonales.nombre) &&
+      esValido(formulario.datosPersonales.apellido) &&
+      esValido(formulario.datosPersonales.email) &&
+      esValido(formulario.datosPersonales.telefono) &&
+      esValido(formulario.datosPersonales.direccion) &&
+      esValido(formulario.datosPersonales.codigoPostal) &&
+      esValido(formulario.datosPersonales.localidad)
   }
   return true
 }
 
 async function guardarCV() {
-  const response = await fetch('http://127.0.0.1:8001/api/cv', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-    body: JSON.stringify({
-      ...form,
-      plantilla: plantillaSeleccionada.value,
-      foto: ponerFoto.value === true,           // siempre boolean: true o false
-      foto_base64: ponerFoto.value ? fotoPerfil.value : null,  // la imagen aparte
-    }),
-  })
-  if (!response.ok) {
-    const err = await response.json()
-    console.error('Error del backend:', JSON.stringify(err, null, 2))
-    return
-  }
-  const data = await response.json()
-  if (!data.id_cv) { console.error('Backend no devolvió id_cv:', data); return }
+  cargando.value = true
+  mensajeCargaActual.value = mensajesCarga[0]
+  let i = 0
+  intervaloMensajes = setInterval(() => {
+    i = (i + 1) % mensajesCarga.length
+    mensajeCargaActual.value = mensajesCarga[i]
+  }, 2000)
 
-  const rutas: Record<'europass' | 'minimalista' | 'moderna', string> = {
-    europass:    `/forms/plantilla-europass/${data.id_cv}`,
-    minimalista: `/forms/plantilla-minimalista/${data.id_cv}`,
-    moderna:     `/forms/plantilla-moderna/${data.id_cv}`,
+  //peticion http
+  try {
+    const response = await fetch('http://127.0.0.1:8001/api/cv', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: JSON.stringify({
+        ...formulario,
+        plantilla: plantillaSeleccionada.value,
+        foto: ponerFoto.value === true,
+        foto_base64: ponerFoto.value ? fotoPerfil.value : null,
+      }),
+    })
+
+    if (!response.ok) {
+      const err = await response.json()
+      console.error('Error del backend:', JSON.stringify(err, null, 2))
+      return
+    }
+
+    const data = await response.json()
+    if (!data.id_cv) { console.error('Backend no devolvió id_cv:', data); return }
+
+    const rutas: Record<'europass' | 'minimalista' | 'moderna', string> = {
+      europass:    `/forms/plantilla-europass/${data.id_cv}`,
+      minimalista: `/forms/plantilla-minimalista/${data.id_cv}`,
+      moderna:     `/forms/plantilla-moderna/${data.id_cv}`,
+    }
+    router.push(rutas[plantillaSeleccionada.value])
+  } finally {
+    if (intervaloMensajes) clearInterval(intervaloMensajes)
+    cargando.value = false
   }
-  router.push(rutas[plantillaSeleccionada.value])
 }
 
 function siguientePagina() {
@@ -106,24 +124,24 @@ function siguientePagina() {
 }
 function anteriorPagina() { intentoAvanzar.value = false; pagina.value-- }
 
-function agregarEducacion() { form.educacion.push({ titulo: '', institucion: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }) }
-function eliminarEducacion(i: number) { form.educacion.splice(i, 1) }
-function agregarIdioma() { form.idiomas.push({ idioma: '', nivel: '' }) }
-function eliminarIdioma(i: number) { form.idiomas.splice(i, 1) }
-function agregarCertificacion() { form.certificaciones.push({ certificacion: '', mes: '', anio: '' }) }
-function eliminarCertificacion(i: number) { form.certificaciones.splice(i, 1) }
-function agregarExperiencia() { form.experiencia.push({ cargo: '', empresa: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }) }
-function eliminarExperiencia(i: number) { form.experiencia.splice(i, 1) }
+function agregarEducacion() { formulario.educacion.push({ titulo: '', institucion: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }) }
+function eliminarEducacion(i: number) { formulario.educacion.splice(i, 1) }
+function agregarIdioma() { formulario.idiomas.push({ idioma: '', nivel: '' }) }
+function eliminarIdioma(i: number) { formulario.idiomas.splice(i, 1) }
+function agregarCertificacion() { formulario.certificaciones.push({ certificacion: '', mes: '', anio: '' }) }
+function eliminarCertificacion(i: number) { formulario.certificaciones.splice(i, 1) }
+function agregarExperiencia() { formulario.experiencia.push({ cargo: '', empresa: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }) }
+function eliminarExperiencia(i: number) { formulario.experiencia.splice(i, 1) }
 
 function agregarSkill() {
   const s = nuevaSkill.value.trim()
-  if (s && !form.skills.includes(s)) form.skills.push(s)
+  if (s && !formulario.skills.includes(s)) formulario.skills.push(s)
   nuevaSkill.value = ''
 }
 function agregarSkillConEnter(e: KeyboardEvent) {
   if (e.key === 'Enter') { e.preventDefault(); agregarSkill() }
 }
-function eliminarSkill(i: number) { form.skills.splice(i, 1) }
+function eliminarSkill(i: number) { formulario.skills.splice(i, 1) }
 function subirFoto() { fileInput.value?.click() }
 function onFileChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
@@ -137,6 +155,17 @@ function onFileChange(event: Event) {
 <template>
   <div class="page">
     <div class="card">
+
+      <!-- OVERLAY DE CARGA IA -->
+      <div v-if="cargando" class="loading-overlay">
+        <div class="loading-card">
+          <div class="loading-spinner"></div>
+          <div class="loading-texts">
+            <p class="loading-title">Generando tu CV</p>
+            <p class="loading-subtitle">{{ mensajeCargaActual }}</p>
+          </div>
+        </div>
+      </div>
 
       <!-- BARRA DE PROGRESO -->
       <div class="progress-wrap">
@@ -155,34 +184,33 @@ function onFileChange(event: Event) {
         <div class="grid">
           <div class="row-2">
             <div class="field-wrap">
-              <input v-model="form.datosPersonales.nombre" placeholder="Nombre" :class="claseCampo(estadoCampo(form.datosPersonales.nombre))" />
-              <span v-if="estadoCampo(form.datosPersonales.nombre) === 'error'" class="hint hint--error">Obligatorio</span>
+              <input v-model="formulario.datosPersonales.nombre" placeholder="Nombre" :class="claseCampo(estadoCampo(formulario.datosPersonales.nombre))" />
+              <span v-if="estadoCampo(formulario.datosPersonales.nombre) === 'error'" class="hint hint--error">Obligatorio</span>
             </div>
             <div class="field-wrap">
-              <input v-model="form.datosPersonales.apellido" placeholder="Apellido" :class="claseCampo(estadoCampo(form.datosPersonales.apellido))" />
-              <span v-if="estadoCampo(form.datosPersonales.apellido) === 'error'" class="hint hint--error">Obligatorio</span>
+              <input v-model="formulario.datosPersonales.apellido" placeholder="Apellido" :class="claseCampo(estadoCampo(formulario.datosPersonales.apellido))" />
+              <span v-if="estadoCampo(formulario.datosPersonales.apellido) === 'error'" class="hint hint--error">Obligatorio</span>
             </div>
           </div>
           <div class="field-wrap">
-            <input v-model="form.datosPersonales.email" placeholder="Email" />
-
+            <input v-model="formulario.datosPersonales.email" placeholder="Email" />
           </div>
           <div class="field-wrap">
-            <input v-model="form.datosPersonales.telefono" placeholder="Teléfono" :class="claseCampo(estadoCampo(form.datosPersonales.telefono))" />
-            <span v-if="estadoCampo(form.datosPersonales.telefono) === 'error'" class="hint hint--error">Obligatorio</span>
+            <input v-model="formulario.datosPersonales.telefono" placeholder="Teléfono" :class="claseCampo(estadoCampo(formulario.datosPersonales.telefono))" />
+            <span v-if="estadoCampo(formulario.datosPersonales.telefono) === 'error'" class="hint hint--error">Obligatorio</span>
           </div>
           <div class="field-wrap">
-            <input v-model="form.datosPersonales.direccion" placeholder="Dirección" :class="claseCampo(estadoCampo(form.datosPersonales.direccion))" />
-            <span v-if="estadoCampo(form.datosPersonales.direccion) === 'error'" class="hint hint--error">Obligatorio</span>
+            <input v-model="formulario.datosPersonales.direccion" placeholder="Dirección" :class="claseCampo(estadoCampo(formulario.datosPersonales.direccion))" />
+            <span v-if="estadoCampo(formulario.datosPersonales.direccion) === 'error'" class="hint hint--error">Obligatorio</span>
           </div>
           <div class="row-2">
             <div class="field-wrap">
-              <input v-model="form.datosPersonales.codigoPostal" placeholder="Código Postal" :class="claseCampo(estadoCampo(form.datosPersonales.codigoPostal))" />
-              <span v-if="estadoCampo(form.datosPersonales.codigoPostal) === 'error'" class="hint hint--error">Obligatorio</span>
+              <input v-model="formulario.datosPersonales.codigoPostal" placeholder="Código Postal" :class="claseCampo(estadoCampo(formulario.datosPersonales.codigoPostal))" />
+              <span v-if="estadoCampo(formulario.datosPersonales.codigoPostal) === 'error'" class="hint hint--error">Obligatorio</span>
             </div>
             <div class="field-wrap">
-              <input v-model="form.datosPersonales.localidad" placeholder="Localidad" :class="claseCampo(estadoCampo(form.datosPersonales.localidad))" />
-              <span v-if="estadoCampo(form.datosPersonales.localidad) === 'error'" class="hint hint--error">Obligatorio</span>
+              <input v-model="formulario.datosPersonales.localidad" placeholder="Localidad" :class="claseCampo(estadoCampo(formulario.datosPersonales.localidad))" />
+              <span v-if="estadoCampo(formulario.datosPersonales.localidad) === 'error'" class="hint hint--error">Obligatorio</span>
             </div>
           </div>
           <div class="toggle-row">
@@ -193,7 +221,7 @@ function onFileChange(event: Event) {
               </div>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" v-model="form.datosPersonales.permisoConducir" />
+              <input type="checkbox" v-model="formulario.datosPersonales.permisoConducir" />
               <span class="toggle-track"><span class="toggle-thumb"></span></span>
             </label>
           </div>
@@ -205,7 +233,7 @@ function onFileChange(event: Event) {
       <div v-if="pagina === 2">
         <h1>Educación <span class="opcional-badge">Opcional</span></h1>
         <div class="chips-list">
-          <div v-for="(edu, index) in form.educacion" :key="index" class="item-chip">
+          <div v-for="(edu, index) in formulario.educacion" :key="index" class="item-chip">
             <div class="chip-fields">
               <input v-model="edu.titulo" placeholder="Título obtenido" class="chip-input" />
               <input v-model="edu.institucion" placeholder="Institución" class="chip-input" />
@@ -230,7 +258,7 @@ function onFileChange(event: Event) {
                 </div>
               </div>
             </div>
-            <button v-if="form.educacion.length > 1" @click="eliminarEducacion(index)" type="button" class="chip-remove">✕</button>
+            <button v-if="formulario.educacion.length > 1" @click="eliminarEducacion(index)" type="button" class="chip-remove">✕</button>
           </div>
         </div>
         <button @click="agregarEducacion" type="button" class="btn-add">+ Agregar educación</button>
@@ -244,7 +272,7 @@ function onFileChange(event: Event) {
       <div v-if="pagina === 3">
         <h1>Certificaciones <span class="opcional-badge">Opcional</span></h1>
         <div class="chips-list">
-          <div v-for="(cert, index) in form.certificaciones" :key="index" class="item-chip">
+          <div v-for="(cert, index) in formulario.certificaciones" :key="index" class="item-chip">
             <div class="chip-fields">
               <input v-model="cert.certificacion" placeholder="Certificación" class="chip-input" />
               <div class="fecha-row">
@@ -269,7 +297,7 @@ function onFileChange(event: Event) {
       <div v-if="pagina === 4">
         <h1>Experiencia <span class="opcional-badge">Opcional</span></h1>
         <div class="chips-list">
-          <div v-for="(exp, index) in form.experiencia" :key="index" class="item-chip">
+          <div v-for="(exp, index) in formulario.experiencia" :key="index" class="item-chip">
             <div class="chip-fields">
               <input v-model="exp.cargo" placeholder="Cargo" class="chip-input" />
               <input v-model="exp.empresa" placeholder="Empresa" class="chip-input" />
@@ -294,7 +322,7 @@ function onFileChange(event: Event) {
                 </div>
               </div>
             </div>
-            <button v-if="form.experiencia.length > 1" @click="eliminarExperiencia(index)" type="button" class="chip-remove">✕</button>
+            <button v-if="formulario.experiencia.length > 1" @click="eliminarExperiencia(index)" type="button" class="chip-remove">✕</button>
           </div>
         </div>
         <button @click="agregarExperiencia" type="button" class="btn-add">+ Agregar experiencia</button>
@@ -308,7 +336,7 @@ function onFileChange(event: Event) {
       <div v-if="pagina === 5">
         <h1>Idiomas <span class="opcional-badge">Opcional</span></h1>
         <div class="chips-list">
-          <div v-for="(idioma, index) in form.idiomas" :key="index" class="item-chip item-chip--row">
+          <div v-for="(idioma, index) in formulario.idiomas" :key="index" class="item-chip item-chip--row">
             <div class="field-wrap" style="flex:1">
               <input v-model="idioma.idioma" placeholder="Idioma" class="chip-input" />
             </div>
@@ -332,8 +360,8 @@ function onFileChange(event: Event) {
       <div v-if="pagina === 6">
         <h1>Skills <span class="opcional-badge">Opcional</span></h1>
         <h2>Añade tus habilidades técnicas o personales</h2>
-        <div v-if="form.skills.length > 0" class="skills-tags">
-          <span v-for="(skill, index) in form.skills" :key="index" class="skill-tag">
+        <div v-if="formulario.skills.length > 0" class="skills-tags">
+          <span v-for="(skill, index) in formulario.skills" :key="index" class="skill-tag">
             {{ skill }}
             <button @click="eliminarSkill(index)" type="button" class="skill-tag-remove">✕</button>
           </span>
@@ -354,11 +382,11 @@ function onFileChange(event: Event) {
         <h2>Pega aquí la oferta a la que quieres aplicar para personalizar tu CV</h2>
         <div class="grid">
           <div class="field-wrap">
-            <input v-model="form.ofertaDeTrabajo.empresa" placeholder="Empresa" />
+            <input v-model="formulario.ofertaDeTrabajo.empresa" placeholder="Empresa" />
           </div>
           <div class="form-group">
             <label>Descripción de la oferta</label>
-            <textarea v-model="form.ofertaDeTrabajo.descripcion" placeholder="Pega aquí el texto de la oferta de trabajo..." rows="6"></textarea>
+            <textarea v-model="formulario.ofertaDeTrabajo.descripcion" placeholder="Pega aquí el texto de la oferta de trabajo..." rows="6"></textarea>
           </div>
         </div>
         <div class="nav-buttons">
@@ -371,7 +399,6 @@ function onFileChange(event: Event) {
       <div v-if="pagina === 8">
         <h1>Foto de perfil</h1>
         <h2>¿Quieres añadir una foto a tu CV?</h2>
-
         <div class="foto-opciones">
           <button type="button" class="foto-opcion" :class="{ selected: ponerFoto }" @click="ponerFoto = true">
             <span class="foto-opcion-label">Sí, añadir foto</span>
@@ -380,13 +407,11 @@ function onFileChange(event: Event) {
             <span class="foto-opcion-label">Sin foto</span>
           </button>
         </div>
-
         <div v-if="ponerFoto" class="foto-upload-area">
           <button @click="subirFoto" type="button" class="secondary">Subir foto</button>
           <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="onFileChange" />
           <img v-if="fotoPerfil" :src="fotoPerfil" class="avatar" />
         </div>
-
         <div class="nav-buttons" style="margin-top: 16px;">
           <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
           <button @click="siguientePagina" type="button">Siguiente</button>
@@ -655,9 +680,7 @@ button:hover { transform: translateY(-1px); opacity: 0.9; }
 button.secondary { background: #f3f4f6; color: #111; }
 
 /* SELECTOR DE PLANTILLA */
-.plantillas-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-}
+.plantillas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .plantilla-card {
   position: relative; display: flex; flex-direction: column; align-items: center;
   gap: 8px; padding: 10px 8px 12px; border: 2px solid #e7e7e7;
@@ -667,13 +690,8 @@ button.secondary { background: #f3f4f6; color: #111; }
 }
 .plantilla-card:hover { border-color: #999; background: white; transform: none; opacity: 1; }
 .plantilla-card.selected { border-color: #111; background: white; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
-
-.plantilla-preview {
-  width: 100%; aspect-ratio: 3/4; overflow: hidden; border-radius: 6px;
-  border: 1px solid #eee; background: white;
-}
+.plantilla-preview { width: 100%; aspect-ratio: 3/4; overflow: hidden; border-radius: 6px; border: 1px solid #eee; background: white; }
 .plantilla-preview svg { width: 100%; height: 100%; display: block; }
-
 .plantilla-check {
   position: absolute; top: 8px; right: 8px;
   width: 20px; height: 20px; border-radius: 50%;
@@ -697,8 +715,33 @@ button.secondary { background: #f3f4f6; color: #111; }
 .foto-opcion-icon { font-size: 22px; }
 .foto-opcion-label { font-size: 13px; font-weight: 600; color: #111; }
 .foto-upload-area { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; border: 1px dashed #ddd; border-radius: 12px; background: #fafafa; }
-
 .avatar { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 1px solid #eee; display: block; }
+
+/* PAGE TRANSITIONS */
 .card > div { animation: fadeIn 0.25s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── LOADING OVERLAY ── */
+.loading-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+}
+.loading-card {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 36px 48px; background: white;
+  border-radius: 16px; border: 1px solid #e7e7e7;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+}
+.loading-spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid #f0f0f0;
+  border-top-color: #111;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-texts { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.loading-title { font-size: 15px; font-weight: 600; color: #111; margin: 0; }
+.loading-subtitle { font-size: 13px; color: #999; margin: 0; }
 </style>

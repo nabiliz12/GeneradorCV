@@ -36,7 +36,6 @@ onMounted(() => recogerDatos())
   <div v-else-if="cvData" class="cv-bg">
     <div class="cv">
 
-      <!-- CABECERA -->
       <header class="cv-header">
         <div class="cv-header-left">
           <h1 class="cv-name">
@@ -58,17 +57,13 @@ onMounted(() => recogerDatos())
 
       <div class="cv-rule"></div>
 
-      <!-- ✅ DESCRIPCIÓN / PERFIL PROFESIONAL (ancho completo) -->
       <section v-if="cvData.descripcion" class="cv-descripcion-section">
         <h2 class="cv-descripcion-title">Perfil profesional</h2>
         <p class="cv-descripcion-text">{{ cvData.descripcion }}</p>
         <div class="cv-rule cv-rule-sm"></div>
       </section>
 
-      <!-- CUERPO: 2 columnas -->
       <div class="cv-body">
-
-        <!-- COLUMNA IZQUIERDA -->
         <div class="cv-col-left">
 
           <section v-if="cvData.experiencia?.length" class="cv-section">
@@ -76,10 +71,7 @@ onMounted(() => recogerDatos())
             <div v-for="(exp, i) in cvData.experiencia" :key="i" class="cv-entry">
               <div class="cv-entry-head">
                 <strong>{{ exp.puesto || exp.cargo }}</strong>
-                <span class="cv-entry-date">
-                  {{ exp.mesInicio || exp.fecha_inicio || '' }} {{ exp.anioInicio }} —
-                  {{ exp.actualidad ? 'Actualidad' : ((exp.mesFin || exp.fecha_fin || '') + ' ' + (exp.anioFin || '')) }}
-                </span>
+                <span class="cv-entry-date">{{ exp.mesInicio || exp.fecha_inicio || '' }} {{ exp.anioInicio }} — {{ exp.actualidad ? 'Actualidad' : ((exp.mesFin || exp.fecha_fin || '') + ' ' + (exp.anioFin || '')) }}</span>
               </div>
               <div class="cv-entry-org">{{ exp.empresa }}</div>
             </div>
@@ -104,7 +96,6 @@ onMounted(() => recogerDatos())
 
         </div>
 
-        <!-- COLUMNA DERECHA -->
         <div class="cv-col-right">
 
           <section v-if="cvData.idiomas?.length" class="cv-section">
@@ -132,167 +123,70 @@ onMounted(() => recogerDatos())
 
         </div>
       </div>
-
     </div>
+
+    <!-- BADGE PORCENTAJE -->
+    <div v-if="Number(cvData.porcentaje) > 0" class="match-badge" :class="{
+      'match-rojo':     Number(cvData.porcentaje) < 30,
+      'match-amarillo': Number(cvData.porcentaje) >= 30 && Number(cvData.porcentaje) < 70,
+      'match-verde':    Number(cvData.porcentaje) >= 70
+    }">
+      <span class="match-number">{{ Number(cvData.porcentaje) }}%</span>
+      <span class="match-label">match</span>
+    </div>
+
   </div>
 </template>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap');
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.cv-bg {
-  background: #f2f2f0;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 48px 16px;
-  font-family: 'Lato', sans-serif;
-}
+.cv-bg { background: #f2f2f0; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 48px 16px; font-family: 'Lato', sans-serif; }
+.cv { width: 210mm; min-height: 297mm; background: #fff; padding: 44px 48px; box-shadow: 0 4px 40px rgba(0,0,0,0.08); color: #1a1a1a; }
 
-.cv {
-  width: 210mm;
-  min-height: 297mm;
-  background: #fff;
-  padding: 44px 48px;
-  box-shadow: 0 4px 40px rgba(0,0,0,0.08);
-  color: #1a1a1a;
-}
-
-.cv-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px;
-}
+.cv-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
 .cv-header-left { flex: 1; }
-
-.cv-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 36pt;
-  font-weight: 400;
-  line-height: 1.05;
-  color: #111;
-  letter-spacing: -0.5px;
-}
+.cv-name { font-family: 'Playfair Display', serif; font-size: 36pt; font-weight: 400; line-height: 1.05; color: #111; letter-spacing: -0.5px; }
 .cv-lastname { font-weight: 700; }
-
-.cv-title {
-  font-size: 10pt;
-  font-weight: 300;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  margin-top: 6px;
-}
-
-.cv-contact-line {
-  font-size: 8.5pt;
-  color: #555;
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-}
+.cv-title { font-size: 10pt; font-weight: 300; color: #888; text-transform: uppercase; letter-spacing: 3px; margin-top: 6px; }
+.cv-contact-line { font-size: 8.5pt; color: #555; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .cv-sep { color: #bbb; }
 .cv-conducir { font-size: 8pt; color: #888; margin-top: 4px; }
-
-.cv-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #eee;
-  flex-shrink: 0;
-  margin-top: 4px;
-}
-
-.cv-rule {
-  height: 1px;
-  background: #1a1a1a;
-  margin: 24px 0;
-}
+.cv-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; flex-shrink: 0; margin-top: 4px; }
+.cv-rule { height: 1px; background: #1a1a1a; margin: 24px 0; }
 .cv-rule-sm { margin: 20px 0 0 0; }
 
-/* ✅ DESCRIPCIÓN */
 .cv-descripcion-section { margin-bottom: 0; }
-.cv-descripcion-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 10pt;
-  font-weight: 700;
-  color: #111;
-  text-transform: uppercase;
-  letter-spacing: 2.5px;
-  margin-bottom: 8px;
-}
-.cv-descripcion-text {
-  font-size: 9pt;
-  color: #555;
-  line-height: 1.7;
-  font-weight: 300;
-  white-space: pre-line;
-}
+.cv-descripcion-title { font-family: 'Playfair Display', serif; font-size: 10pt; font-weight: 700; color: #111; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 8px; }
+.cv-descripcion-text { font-size: 9pt; color: #555; line-height: 1.7; font-weight: 300; white-space: pre-line; }
 
-.cv-body {
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  gap: 40px;
-  margin-top: 24px;
-}
-
+.cv-body { display: grid; grid-template-columns: 1fr 200px; gap: 40px; margin-top: 24px; }
 .cv-section { margin-bottom: 28px; }
-
-.cv-section-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 10pt;
-  font-weight: 700;
-  color: #111;
-  text-transform: uppercase;
-  letter-spacing: 2.5px;
-  border-bottom: 1px solid #111;
-  padding-bottom: 6px;
-  margin-bottom: 14px;
-}
-
+.cv-section-title { font-family: 'Playfair Display', serif; font-size: 10pt; font-weight: 700; color: #111; text-transform: uppercase; letter-spacing: 2.5px; border-bottom: 1px solid #111; padding-bottom: 6px; margin-bottom: 14px; }
 .cv-entry { margin-bottom: 14px; }
-.cv-entry-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-}
+.cv-entry-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .cv-entry-head strong { font-size: 9.5pt; font-weight: 700; color: #111; }
 .cv-entry-date { font-size: 7.5pt; font-weight: 300; color: #999; white-space: nowrap; }
 .cv-entry-org { font-size: 8.5pt; font-weight: 300; color: #666; margin-top: 2px; font-style: italic; }
-
-.cv-lang-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 8.5pt;
-  color: #333;
-  padding: 4px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
+.cv-lang-row { display: flex; justify-content: space-between; font-size: 8.5pt; color: #333; padding: 4px 0; border-bottom: 1px solid #f0f0f0; }
 .cv-lang-name { font-weight: 700; }
 .cv-lang-nivel { color: #888; font-weight: 300; }
-
 .cv-skill-list { list-style: none; padding: 0; }
-.cv-skill-list li {
-  font-size: 8.5pt;
-  color: #444;
-  padding: 3px 0;
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 300;
-}
+.cv-skill-list li { font-size: 8.5pt; color: #444; padding: 3px 0; border-bottom: 1px solid #f0f0f0; font-weight: 300; }
 .cv-skill-list li::before { content: '— '; color: #bbb; }
-
 .cv-contact-block { font-size: 8.5pt; color: #555; line-height: 1.7; font-weight: 300; }
+
+.match-badge { position: fixed; bottom: 28px; right: 28px; width: 64px; height: 64px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 9999; }
+.match-rojo     { background: #e53935; }
+.match-amarillo { background: #f9a825; }
+.match-verde    { background: #2e7d32; }
+.match-number { font-size: 16px; font-weight: 700; color: #fff; line-height: 1; font-family: 'Lato', sans-serif; }
+.match-label  { font-size: 9px; color: rgba(255,255,255,0.85); font-weight: 500; letter-spacing: 0.5px; font-family: 'Lato', sans-serif; }
 
 @media print {
   .cv-bg { background: none; padding: 0; }
   .cv { box-shadow: none; padding: 20px; width: 100%; }
+  .match-badge { display: none; }
 }
 </style>

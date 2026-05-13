@@ -1,7 +1,5 @@
-from io import BytesIO
 import os
 import traceback
-
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
@@ -10,6 +8,7 @@ import asyncio
 from app.models import FormDataModel
 from app.routers import registro
 from groq import Groq
+import json
 
 app = FastAPI()
 
@@ -152,11 +151,12 @@ async def guardarCV(datos: FormDataModel, current_user: dict = Depends(registro.
                     UPDATE CURRICULUM SET id_oferta = :id_oferta WHERE id_cv = :id_cv
                 """), {"id_oferta": oferta_result.lastrowid, "id_cv": id_cv})
 
-            #9 Implementación IA
-            textoDescripcion = await implementar_IA(datos.dict(),current_user)
+            # 9. Implementación IA
+            textoDescripcion, porcentaje = await implementar_IA(datos.dict(), current_user)
+
             db.execute(text("""
-                            UPDATE CURRICULUM SET descripcion = :textoDescripcion WHERE id_cv = :id_cv
-                            """), {"textoDescripcion": textoDescripcion, "id_cv": id_cv})
+                UPDATE CURRICULUM SET descripcion = :textoDescripcion, porcentaje = :porcentaje WHERE id_cv = :id_cv
+            """), {"textoDescripcion": textoDescripcion, "porcentaje": porcentaje, "id_cv": id_cv})
 
             db.commit()
 
@@ -172,7 +172,6 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
     id_usuario = current_user["id_usuario"]
     with engine.connect() as db:
         try:
-            # Verificar que el CV pertenece al usuario
             cv_check = db.execute(text("""
                 SELECT id_cv FROM CURRICULUM
                 WHERE id_cv = :id_cv AND id_usuario = :id_usuario
@@ -181,7 +180,6 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
             if not cv_check:
                 raise HTTPException(status_code=404, detail="CV no encontrado")
 
-            # A partir de aquí solo filtramos por id_cv (ya verificamos el usuario arriba)
             datos = db.execute(text("""
                 SELECT nombre, Apellido, email, telefono, direccion,
                        codigo_postal, localidad, permiso_conducir
@@ -223,7 +221,7 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
             """), {"id_cv": id_cv}).fetchone()
 
             curriculum = db.execute(text("""
-                SELECT tiene_foto, descripcion FROM CURRICULUM WHERE id_cv = :id_cv
+                SELECT tiene_foto, descripcion, porcentaje FROM CURRICULUM WHERE id_cv = :id_cv
             """), {"id_cv": id_cv}).fetchone()
 
         except HTTPException:
@@ -242,7 +240,8 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
         "skills": [r.nombre for r in skills],
         "ofertaDeTrabajo": dict(oferta._mapping) if oferta and oferta.empresa else {},
         "foto": bool(curriculum.tiene_foto) if curriculum else False,
-        "descripcion": curriculum.descripcion if curriculum else None
+        "descripcion": curriculum.descripcion if curriculum else None,
+        "porcentaje": int(curriculum.porcentaje) if curriculum and curriculum.porcentaje is not None else None
     }
 
 @app.get("/api/historial")
@@ -326,9 +325,9 @@ async def actualizar_perfil_usuario(datos: dict, current_user: dict = Depends(re
 
     return {"mensaje": "Perfil actualizado correctamente"}
 
+
 @app.put("/api/usuario/cambiar_contraseña")
 async def cambiar_contraseña(datos: dict, current_user: dict = Depends(registro.get_current_user)):
-
     id_usuario = current_user["id_usuario"]
     with engine.connect() as db:
         try:
@@ -341,7 +340,7 @@ async def cambiar_contraseña(datos: dict, current_user: dict = Depends(registro
 
             if not verificar_password(datos["contrasena_actual"], usuario.contraseña):
                 raise HTTPException(status_code=400, detail="Contraseña actual incorrecta")
-            
+
             db.execute(text("""
                 UPDATE USUARIO SET contraseña = :nueva_contraseña WHERE id_usuario = :id_usuario
             """), {"nueva_contraseña": hashear_password(datos["nueva_contraseña"]), "id_usuario": id_usuario})
@@ -352,7 +351,6 @@ async def cambiar_contraseña(datos: dict, current_user: dict = Depends(registro
             raise HTTPException(status_code=500, detail=str(e))
 
     return {"mensaje": "Contraseña actualizada correctamente"}
-
 
 
 @app.delete("/api/usuario")
@@ -378,37 +376,60 @@ async def implementar_IA(datos: dict, current_user: dict = None):
     skills = datos.get("skills", [])
     idiomas = datos.get("idiomas", [])
     oferta = datos.get("ofertaDeTrabajo", {})
+    descripcion_oferta = oferta.get("descripcion", "")
 
     prompt = f"""
-    Eres un experto en recursos humanos. Escribe un párrafo de perfil profesional para el CV de {nombre} {apellido}.
+Eres un experto en selección de personal. Analiza el perfil del candidato y devuelve un JSON con dos claves.
 
-    Datos del candidato:
-    - Educación: {educacion}
-    - Experiencia: {experiencia}
-    - Skills: {skills}
-    - Idiomas: {idiomas}
-    {"- Orientado a este tipo de puesto: " + str(oferta.get("descripcion", "")) if oferta.get("descripcion") else ""}
+CANDIDATO: {nombre} {apellido}
+- Educación: {educacion}
+- Experiencia laboral: {experiencia}
+- Skills: {skills}
+- Idiomas: {idiomas}
 
-    Instrucciones estrictas:
-    - Escribe SOLO el párrafo, nada más
-    - 3-5 líneas máximo
-    - En primera persona
-    - Tono profesional pero natural, nada robótico
-    - Destaca las habilidades y experiencia más relevantes
-    - NO menciones nombres de empresas, organizaciones ni productos
-    - NO uses frases genéricas como "soy una persona apasionada y motivada"
-    - NO uses asteriscos, markdown, títulos ni explicaciones
-    - El resultado debe poder usarse en cualquier CV sin modificaciones
-    """
+{"OFERTA DE TRABAJO:" + descripcion_oferta if descripcion_oferta else "Sin oferta de trabajo."}
+
+INSTRUCCIONES PARA EL PORCENTAJE:
+- Compara las skills, experiencia e idiomas del candidato con los requisitos de la oferta.
+- El porcentaje refleja cuántos requisitos de la oferta cumple el candidato (no si es perfecto para el puesto).
+- Si el candidato tiene alguna skill o tecnología que pide la oferta, suma puntos.
+- Si tiene experiencia en el sector, suma puntos.
+- Si tiene los idiomas requeridos, suma puntos.
+- El MÍNIMO es 10 aunque no cumpla nada. El MÁXIMO es 95.
+- Sé realista pero generoso: un candidato con Angular para una oferta de Angular debe sacar al menos 30.
+- Si no hay oferta, devuelve 50.
+
+INSTRUCCIONES PARA LA DESCRIPCIÓN:
+- Párrafo de 3-5 líneas en primera persona, tono profesional y natural.
+- Sin frases genéricas, sin asteriscos, sin markdown.
+
+Devuelve SOLO este JSON sin nada más:
+{{"descripcion": "...", "porcentaje": 42}}
+"""
 
     try:
         client = Groq(api_key="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")
         respuesta = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=300
+            max_tokens=400
         )
-        return respuesta.choices[0].message.content.strip()
+        contenido = respuesta.choices[0].message.content.strip()
+        print("RESPUESTA IA RAW:", contenido)
+
+        if contenido.startswith("```"):
+            contenido = contenido.split("```")[1]
+            if contenido.startswith("json"):
+                contenido = contenido[4:]
+            contenido = contenido.strip()
+
+        resultado = json.loads(contenido)
+        descripcion = resultado.get("descripcion", "")
+        porcentaje = max(10, min(95, int(resultado.get("porcentaje", 50))))
+        print(f"PORCENTAJE FINAL: {porcentaje}")
+        return descripcion, porcentaje
+
     except Exception as e:
         print(f"Error en IA: {e}")
-        return ""
+        traceback.print_exc()
+        return "", 50
