@@ -31,6 +31,19 @@ async function recogerDatos() {
   }
 }
 
+async function editarCV(data: any) {
+  try {
+    const response = await fetch(`http://127.0.0.1:8001/api/editar_cv/${id_cv}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: JSON.stringify(data)
+    })
+
+  } catch (e: any) {
+    alert('Error al editar CV: ' + e.message)
+  }
+}
+
 onMounted(() => recogerDatos())
 </script>
 
@@ -134,6 +147,8 @@ onMounted(() => recogerDatos())
         </section>
       </main>
     </div>
+
+    <button @click="editarCV(cvData)">Editar CV</button>
 
     <!-- BADGE PORCENTAJE -->
     <div v-if="Number(cvData.porcentaje) > 0" class="match-badge" :class="{

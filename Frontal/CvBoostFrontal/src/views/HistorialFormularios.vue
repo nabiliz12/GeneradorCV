@@ -52,7 +52,7 @@ async function eliminarCv(id_cv: number) {
 }
 
 function verCv(id_cv: number) {
-  router.push(`/forms/vista-previa/${id_cv}`)
+  router.push(`/forms/recuperar_cv/${id_cv}`)
 }
 
 function formatFecha(fecha: string) {

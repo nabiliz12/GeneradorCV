@@ -14,9 +14,18 @@ onMounted(async () => {
 
 const menuAbierto = ref(false)
 
-function cerrarSesion() {
+async function cerrarSesion() {
+  try{
+    await fetch('http://127.0.0.1:8001/api/cerrar_sesion', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+  } catch (error) {
+    console.error('Error al cerrar sesión:', error)
+  }
   localStorage.removeItem('token')
   localStorage.removeItem('nombre')
+  localStorage.removeItem('email')
   estaLogueado.value = false
   menuAbierto.value = false
   router.push('/')

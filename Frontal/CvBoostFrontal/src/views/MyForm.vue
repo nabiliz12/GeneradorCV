@@ -45,7 +45,7 @@ const formulario = reactive({
   idiomas: [{ idioma: '', nivel: '' }],
   skills: [] as string[],
   foto: false,
-  ofertaDeTrabajo: { empresa: '', descripcion: '' }
+  ofertaDeTrabajo: { empresa: '', descripcion: '' },
 })
 
 function esValido(val: string) { return val.trim().length > 0 } // para los campos obligatorios de la primera pagina, si el campo tiene texto se considera ok, si no, error (si se ha intentado avanzar) o idle (si no se ha intentado avanzar aun)
@@ -447,9 +447,7 @@ function onFileChange(event: Event) {
                     <circle cx="101" cy="12" r="5" fill="#b0bec5"/>
                     <path d="M91 28 q10-8 20 0" fill="#b0bec5"/>
                   </template>
-                  <template v-else>
-                    <rect x="88" y="6" width="24" height="20" fill="#1a3d7a" opacity="0.4"/>
-                  </template>
+             
                   <rect x="8" y="36" width="60" height="8" fill="#003399" opacity="0.15"/>
                   <rect x="8" y="48" width="45" height="4" rx="1" fill="#003399" opacity="0.5"/>
                   <rect x="8" y="56" width="30" height="3" rx="1" fill="#aac4f0"/>
@@ -487,11 +485,7 @@ function onFileChange(event: Event) {
                     <circle cx="100" cy="17" r="5" fill="#b0bec5"/>
                     <path d="M86 36 q14-10 28 0" fill="#b0bec5"/>
                   </template>
-                  <template v-else>
-                    <circle cx="100" cy="22" r="14" fill="#f5f5f5" stroke="#eee" stroke-width="1"/>
-                    <line x1="94" y1="16" x2="106" y2="28" stroke="#ddd" stroke-width="1.5"/>
-                    <line x1="106" y1="16" x2="94" y2="28" stroke="#ddd" stroke-width="1.5"/>
-                  </template>
+
                   <rect x="8" y="50" width="104" height="1" fill="#111"/>
                   <rect x="8" y="58" width="40" height="2" rx="1" fill="#111" opacity="0.7"/>
                   <rect x="8" y="64" width="55" height="2" rx="1" fill="#333"/>
@@ -524,12 +518,7 @@ function onFileChange(event: Event) {
                     <circle cx="22" cy="20" r="5" fill="#3d4a5c"/>
                     <path d="M10 38 q12-8 24 0" fill="#3d4a5c"/>
                   </template>
-                  <template v-else>
-                    <circle cx="22" cy="24" r="14" fill="#232d40"/>
-                    <circle cx="22" cy="24" r="14" fill="none" stroke="#00c896" stroke-width="2" stroke-dasharray="3 2"/>
-                    <line x1="16" y1="18" x2="28" y2="30" stroke="#3d4a5c" stroke-width="1.5"/>
-                    <line x1="28" y1="18" x2="16" y2="30" stroke="#3d4a5c" stroke-width="1.5"/>
-                  </template>
+
                   <rect x="6" y="46" width="24" height="2" rx="1" fill="#00c896" opacity="0.8"/>
                   <rect x="6" y="52" width="32" height="1.5" rx="0.5" fill="#c8d6e5" opacity="0.6"/>
                   <rect x="6" y="57" width="28" height="1.5" rx="0.5" fill="#c8d6e5" opacity="0.6"/>

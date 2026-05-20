@@ -5,9 +5,9 @@ import Login from '@/views/auth/Login.vue'
 import Registro from '@/views/auth/Registro.vue'
 import HistorialFormularios from '@/views/HistorialFormularios.vue'
 import Ajustes from '@/views/conSesion/Ajustes.vue'
-import PlantillaEuropass from '@/views/plantillas/PlantillaEuropass.vue'
-import PlantillaMinimalista from '@/views/plantillas/PlantillaMinimalista.vue'
-import PlantillaModerna from '@/views/plantillas/PlantillaModerna.vue'
+import PlantillaModerna from '@/views/plantillas/conFoto/PlantillaModerna.vue'
+import PlantillaMinimalista from '@/views/plantillas/conFoto/PlantillaMinimalista.vue'
+import PlantillaEuropass from '@/views/plantillas/conFoto/PlantillaEuropass.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,44 +20,50 @@ const router = createRouter({
     {
       path: '/forms',
       name: 'forms',
-      component:MyForm
+      component: MyForm,
     },
 
     {
-      path:'/forms/history',
-      name:'history',
-      component:HistorialFormularios
+      path: '/forms/history',
+      name: 'history',
+      component: HistorialFormularios,
     },
-     {
+    {
       path: '/login',
       name: 'login',
       component: Login,
     },
-      {
-          path: '/login/ajustes',
-          name: 'ajustes',
-          component: Ajustes,
-        },
+    {
+      path: '/login/ajustes',
+      name: 'ajustes',
+      component: Ajustes,
+    },
     {
       path: '/registro',
       name: 'registro',
       component: Registro,
     },
     {
+      path: '/forms/recuperar_cv/:id_cv',
+      name: 'recuperar_cv',
+      component: () => import('@/views/vista-previa.vue'),
+    },
+    {
       path: '/forms/plantilla-europass/:id_cv',
       name: 'plantillaEuropass',
-      component: PlantillaEuropass
+      component: PlantillaEuropass,
     },
     {
       path: '/forms/plantilla-minimalista/:id_cv',
       name: 'plantillaMinimalista',
-      component: PlantillaMinimalista
+      component: PlantillaMinimalista,
     },
     {
-    path: '/forms/plantilla-moderna/:id_cv',
-    name: 'plantillaModerna',
-    component: PlantillaModerna
-  }  ],
+      path: '/forms/plantilla-moderna/:id_cv',
+      name: 'plantillaModerna',
+      component: PlantillaModerna,
+    },
+  ],
 })
 
 export default router

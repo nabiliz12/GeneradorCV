@@ -3,10 +3,11 @@ import traceback
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
-from app.routers.auth import hashear_password, verificar_password
+from app.core.security import hashear_password, verificar_password
 import asyncio
-from app.models import FormDataModel
-from app.routers import registro
+from app.models.models import FormDataModel
+from app.routers import auth as registro
+from app.core.database import engine
 from groq import Groq
 import json
 
@@ -14,7 +15,8 @@ app = FastAPI()
 
 app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"])
 
-app.include_router(registro.router,prefix="/api/auth", tags=["auth"])
+
+app.include_router(registro.app,prefix="/api/auth", tags=["auth"])
 
 DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:abc123.@localhost:3306/cv_generator")
 engine = create_engine(DATABASE_URL)
@@ -31,12 +33,13 @@ async def guardarCV(datos: FormDataModel, current_user: dict = Depends(registro.
         try:
             # 1. CURRICULUM
             result = db.execute(text("""
-                INSERT INTO CURRICULUM (id_usuario, titulo, tiene_foto)
-                VALUES (:id_usuario, :titulo, :tiene_foto)
+                INSERT INTO CURRICULUM (id_usuario, titulo, tiene_foto,plantilla)
+                VALUES (:id_usuario, :titulo, :tiene_foto,:plantilla)
             """), {
                 "id_usuario": id_usuario,
                 "titulo": f"CV de {datos.datosPersonales.nombre} {datos.datosPersonales.apellido}",
-                "tiene_foto": 1 if datos.foto else 0
+                "tiene_foto": 1 if datos.foto else 0,
+                "plantilla": datos.plantilla or None
             })
             id_cv = result.lastrowid
 
@@ -172,12 +175,12 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
     id_usuario = current_user["id_usuario"]
     with engine.connect() as db:
         try:
-            cv_check = db.execute(text("""
-                SELECT id_cv FROM CURRICULUM
+            curriculum = db.execute(text("""
+                SELECT tiene_foto, descripcion, porcentaje, plantilla FROM CURRICULUM
                 WHERE id_cv = :id_cv AND id_usuario = :id_usuario
             """), {"id_cv": id_cv, "id_usuario": id_usuario}).fetchone()
 
-            if not cv_check:
+            if not curriculum:
                 raise HTTPException(status_code=404, detail="CV no encontrado")
 
             datos = db.execute(text("""
@@ -221,7 +224,7 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
             """), {"id_cv": id_cv}).fetchone()
 
             curriculum = db.execute(text("""
-                SELECT tiene_foto, descripcion, porcentaje FROM CURRICULUM WHERE id_cv = :id_cv
+                SELECT tiene_foto, descripcion, porcentaje, plantilla FROM CURRICULUM WHERE id_cv = :id_cv
             """), {"id_cv": id_cv}).fetchone()
 
         except HTTPException:
@@ -241,8 +244,142 @@ async def recuperar_cv(id_cv: int, current_user: dict = Depends(registro.get_cur
         "ofertaDeTrabajo": dict(oferta._mapping) if oferta and oferta.empresa else {},
         "foto": bool(curriculum.tiene_foto) if curriculum else False,
         "descripcion": curriculum.descripcion if curriculum else None,
-        "porcentaje": int(curriculum.porcentaje) if curriculum and curriculum.porcentaje is not None else None
+        "porcentaje": int(curriculum.porcentaje) if curriculum and curriculum.porcentaje is not None else None,
+        "plantilla": curriculum.plantilla if curriculum else None,
     }
+
+
+from fastapi import Body
+
+@app.post("/api/editar_cv/{id_cv}")
+async def editar_cv(id_cv: int, datos: dict = Body(...), current_user: dict = Depends(registro.get_current_user)):
+    id_usuario = current_user["id_usuario"]
+    with engine.connect() as db:
+        try:
+            # Verificar que el CV pertenece al usuario
+            cv = db.execute(text("""
+                SELECT id_cv FROM CURRICULUM WHERE id_cv = :id_cv AND id_usuario = :id_usuario
+            """), {"id_cv": id_cv, "id_usuario": id_usuario}).fetchone()
+
+            if not cv:
+                raise HTTPException(status_code=404, detail="CV no encontrado o no pertenece al usuario")
+
+            # 1. Datos personales
+            dp = datos["datosPersonales"]
+            db.execute(text("""
+                UPDATE DATOS_PERSONALES
+                SET nombre=:nombre, Apellido=:apellido, email=:email,
+                    telefono=:telefono, direccion=:direccion,
+                    codigo_postal=:codigo_postal, localidad=:localidad,
+                    permiso_conducir=:permiso_conducir
+                WHERE id_cv=:id_cv
+            """), {
+                "id_cv": id_cv,
+                "nombre": dp["nombre"],
+                "apellido": dp["apellido"],
+                "email": dp["email"],
+                "telefono": dp["telefono"],
+                "direccion": dp["direccion"],
+                "codigo_postal": dp["codigoPostal"],
+                "localidad": dp["localidad"],
+                "permiso_conducir": dp["permisoConducir"]
+            })
+
+            # 2. Educación: borrar y reinsertar (puede haber varios registros)
+            db.execute(text("DELETE FROM EDUCACION WHERE id_cv=:id_cv"), {"id_cv": id_cv})
+            educacion_filtrada = [e for e in datos.get("educacion", []) if e.get("titulo") or e.get("institucion")]
+            if educacion_filtrada:
+                db.execute(text("""
+                    INSERT INTO EDUCACION (id_cv, institucion, titulo, anioInicio, anioFin)
+                    VALUES (:id_cv, :institucion, :titulo, :anioInicio, :anioFin)
+                """), [
+                    {
+                        "id_cv": id_cv,
+                        "institucion": e.get("institucion"),
+                        "titulo": e.get("titulo"),
+                        "anioInicio": f"{e.get('mesInicio', '')} {e.get('anioInicio', '')}".strip() or None,
+                        "anioFin": "Actualidad" if e.get("actualidad") else f"{e.get('mesFin', '')} {e.get('anioFin', '')}".strip() or None
+                    }
+                    for e in educacion_filtrada
+                ])
+
+            # 3. Experiencia laboral: borrar y reinsertar
+            db.execute(text("DELETE FROM EXPERIENCIA_LABORAL WHERE id_cv=:id_cv"), {"id_cv": id_cv})
+            experiencia_filtrada = [e for e in datos.get("experiencia", []) if e.get("cargo") or e.get("empresa")]
+            if experiencia_filtrada:
+                db.execute(text("""
+                    INSERT INTO EXPERIENCIA_LABORAL (id_cv, empresa, puesto, fecha_inicio, fecha_fin)
+                    VALUES (:id_cv, :empresa, :puesto, :fecha_inicio, :fecha_fin)
+                """), [
+                    {
+                        "id_cv": id_cv,
+                        "empresa": e.get("empresa"),
+                        "puesto": e.get("cargo"),
+                        "fecha_inicio": f"{e.get('mesInicio', '')} {e.get('anioInicio', '')}".strip() or None,
+                        "fecha_fin": "Actualidad" if e.get("actualidad") else f"{e.get('mesFin', '')} {e.get('anioFin', '')}".strip() or None
+                    }
+                    for e in experiencia_filtrada
+                ])
+
+            # 4. Idiomas: borrar y reinsertar
+            db.execute(text("DELETE FROM IDIOMA WHERE id_cv=:id_cv"), {"id_cv": id_cv})
+            idiomas_filtrados = [i for i in datos.get("idiomas", []) if i.get("idioma")]
+            if idiomas_filtrados:
+                db.execute(text("""
+                    INSERT INTO IDIOMA (id_cv, nombre, nivel)
+                    VALUES (:id_cv, :nombre, :nivel)
+                """), [
+                    {"id_cv": id_cv, "nombre": i["idioma"], "nivel": i.get("nivel")}
+                    for i in idiomas_filtrados
+                ])
+
+            # 5. Certificaciones: borrar y reinsertar
+            db.execute(text("DELETE FROM CERTIFICACION WHERE id_cv=:id_cv"), {"id_cv": id_cv})
+            certs_filtradas = [c for c in datos.get("certificaciones", []) if c.get("certificacion")]
+            if certs_filtradas:
+                db.execute(text("""
+                    INSERT INTO CERTIFICACION (id_cv, certificacion, expedicion)
+                    VALUES (:id_cv, :certificacion, :expedicion)
+                """), [
+                    {
+                        "id_cv": id_cv,
+                        "certificacion": c["certificacion"],
+                        "expedicion": f"{c.get('mes', '')} {c.get('anio', '')}".strip() or None
+                    }
+                    for c in certs_filtradas
+                ])
+
+            # 6. Skills: borrar pivote y reinsertar (igual que el POST)
+            db.execute(text("DELETE FROM CV_HABILIDAD WHERE id_cv=:id_cv"), {"id_cv": id_cv})
+            for skill_nombre in datos.get("skills", []):
+                db.execute(text("INSERT IGNORE INTO HABILIDAD (nombre) VALUES (:nombre)"), {"nombre": skill_nombre})
+                skill_result = db.execute(text(
+                    "SELECT id_habilidad FROM HABILIDAD WHERE nombre=:nombre"
+                ), {"nombre": skill_nombre})
+                id_habilidad = skill_result.fetchone()[0]
+                db.execute(text("""
+                    INSERT IGNORE INTO CV_HABILIDAD (id_cv, id_habilidad) VALUES (:id_cv, :id_habilidad)
+                """), {"id_cv": id_cv, "id_habilidad": id_habilidad})
+
+            # 7. Regenerar descripción IA y actualizar CURRICULUM
+            textoDescripcion, porcentaje = await implementar_IA(datos, current_user)
+            db.execute(text("""
+                UPDATE CURRICULUM SET descripcion=:descripcion, porcentaje=:porcentaje WHERE id_cv=:id_cv
+            """), {"descripcion": textoDescripcion, "porcentaje": porcentaje, "id_cv": id_cv})
+
+            db.commit()
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return {"mensaje": "CV actualizado correctamente", "id_cv": id_cv}
+        
+        
+
 
 @app.get("/api/historial")
 async def obtener_historial(current_user: dict = Depends(registro.get_current_user)):
@@ -353,6 +490,8 @@ async def cambiar_contraseña(datos: dict, current_user: dict = Depends(registro
     return {"mensaje": "Contraseña actualizada correctamente"}
 
 
+
+
 @app.delete("/api/usuario")
 async def eliminar_cuenta(current_user: dict = Depends(registro.get_current_user)):
     with engine.connect() as db:
@@ -367,6 +506,10 @@ async def eliminar_cuenta(current_user: dict = Depends(registro.get_current_user
             raise HTTPException(status_code=500, detail=str(e))
     return {"mensaje": "Cuenta eliminada"}
 
+@app.post("/api/cerrar_sesion")
+async def cerrar_sesion(current_user: dict = Depends(registro.get_current_user)):
+    registro.cerrar_sesion(current_user["token"])
+    return {"mensaje": "Sesión cerrada correctamente"}
 
 async def implementar_IA(datos: dict, current_user: dict = None):
     nombre = datos.get("datosPersonales", {}).get("nombre", "")
@@ -395,13 +538,19 @@ INSTRUCCIONES PARA EL PORCENTAJE:
 - Si el candidato tiene alguna skill o tecnología que pide la oferta, suma puntos.
 - Si tiene experiencia en el sector, suma puntos.
 - Si tiene los idiomas requeridos, suma puntos.
-- El MÍNIMO es 10 aunque no cumpla nada. El MÁXIMO es 95.
+- El MÍNIMO es 10 aunque no cumpla nada. El MÁXIMO es 100.
 - Sé realista pero generoso: un candidato con Angular para una oferta de Angular debe sacar al menos 30.
 - Si no hay oferta, devuelve 50.
 
 INSTRUCCIONES PARA LA DESCRIPCIÓN:
-- Párrafo de 3-5 líneas en primera persona, tono profesional y natural.
-- Sin frases genéricas, sin asteriscos, sin markdown.
+- Redacta un único párrafo de 4 a 6 líneas en primera persona.
+- Tono profesional, natural y seguro, como si el candidato se estuviera presentando en una entrevista.
+- Debe sonar específico y realista, evitando frases vacías o clichés tipo “soy proactivo” o “me apasiona la tecnología” sin contexto.
+- Incluye de forma integrada la experiencia, tecnologías, sectores o tipos de proyectos en los que ha trabajado.
+- Destaca fortalezas técnicas concretas (frameworks, lenguajes, herramientas, metodologías) si aparecen en el perfil.
+- No uses listas, asteriscos ni formato markdown.
+- No repitas literalmente el CV; reformúlalo de manera fluida y coherente.
+- Evita exageraciones irreales, pero presenta el perfil de forma atractiva y convincente.
 
 Devuelve SOLO este JSON sin nada más:
 {{"descripcion": "...", "porcentaje": 42}}
@@ -425,7 +574,7 @@ Devuelve SOLO este JSON sin nada más:
 
         resultado = json.loads(contenido)
         descripcion = resultado.get("descripcion", "")
-        porcentaje = max(10, min(95, int(resultado.get("porcentaje", 50))))
+        porcentaje = max(10, min(100, int(resultado.get("porcentaje", 50))))
         print(f"PORCENTAJE FINAL: {porcentaje}")
         return descripcion, porcentaje
 

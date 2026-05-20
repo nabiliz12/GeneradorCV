@@ -53,6 +53,7 @@ class FormDataModel(BaseModel):
     skills: list[str]
     foto: bool
     ofertaDeTrabajo: OfertaDeTrabajo
+    plantilla: str | None
 
 
 class Usuario(BaseModel):
@@ -62,5 +63,11 @@ class Usuario(BaseModel):
     contrasena: str
     
 class UsuarioLogin(BaseModel):
+    email: str
+    contrasena: str
+
+class UsuarioRegistro(BaseModel):
+    nombre: str
+    apellidos: str
     email: str
     contrasena: str
