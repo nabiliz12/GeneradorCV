@@ -45,6 +45,22 @@ async function editarCV(data: any) {
 }
 
 onMounted(() => recogerDatos())
+
+async function descargarCV() {
+  const html2pdf = (await import('html2pdf.js')).default
+  const elemento = document.querySelector('.cv') as HTMLElement
+  html2pdf()
+    .set({
+      margin: 0,
+      filename: `cv_de_${cvData.value.datosPersonales.nombre}_${cvData.value.datosPersonales.apellido}.pdf`,
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 1.5, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    })
+    .from(elemento)
+    .save()
+}
+
 </script>
 
 <template>
@@ -52,6 +68,15 @@ onMounted(() => recogerDatos())
   <div v-else-if="error" style="text-align:center;color:red;padding:40px;font-family:sans-serif">Error: {{ error }}</div>
 
   <div v-else-if="cvData" class="cv-bg">
+     <button @click="descargarCV()" class="btn-download" title="Descargar CV">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Descargar CV
+      </button>
+
     <div class="cv">
 
       <aside class="sidebar">
@@ -180,6 +205,25 @@ onMounted(() => recogerDatos())
 .sb-nombre-last { font-size: 13pt; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
 .sb-section { padding: 16px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .sb-section:last-child { border-bottom: none; }
+.btn-download {
+  position: fixed;
+  bottom: 28px;
+  left: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #111;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 9999;
+}
 .sb-section-title { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #00c896; margin-bottom: 12px; }
 .sb-item { display: flex; align-items: flex-start; gap: 8px; font-size: 7.5pt; color: #c8d6e5; margin-bottom: 8px; line-height: 1.45; }
 .sb-icon { font-size: 8pt; flex-shrink: 0; margin-top: 1px; }

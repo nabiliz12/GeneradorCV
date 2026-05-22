@@ -27,6 +27,23 @@ async function recogerDatos() {
 }
 
 onMounted(() => recogerDatos())
+
+
+async function descargarCV() {
+  const html2pdf = (await import('html2pdf.js')).default
+  const elemento = document.querySelector('.cv') as HTMLElement
+  html2pdf()
+    .set({
+      margin: 0,
+      filename: `cv_de_${cvData.value.datosPersonales.nombre}_${cvData.value.datosPersonales.apellido}.pdf`,
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 1.5, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    })
+    .from(elemento)
+    .save()
+}
+
 </script>
 
 <template>
@@ -34,6 +51,14 @@ onMounted(() => recogerDatos())
   <div v-else-if="error" style="text-align:center;color:red;padding:40px;font-family:sans-serif">Error: {{ error }}</div>
 
   <div v-else-if="cvData" class="cv-bg">
+         <button @click="descargarCV()" class="btn-download" title="Descargar CV">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Descargar CV
+      </button>
     <div class="cv">
 
       <header class="cv-header">
@@ -183,7 +208,25 @@ onMounted(() => recogerDatos())
 .match-verde    { background: #2e7d32; }
 .match-number { font-size: 16px; font-weight: 700; color: #fff; line-height: 1; font-family: 'Lato', sans-serif; }
 .match-label  { font-size: 9px; color: rgba(255,255,255,0.85); font-weight: 500; letter-spacing: 0.5px; font-family: 'Lato', sans-serif; }
-
+.btn-download {
+  position: fixed;
+  bottom: 28px;
+  left: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #111;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 9999;
+}
 @media print {
   .cv-bg { background: none; padding: 0; }
   .cv { box-shadow: none; padding: 20px; width: 100%; }

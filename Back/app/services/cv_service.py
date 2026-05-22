@@ -3,6 +3,7 @@ from app.repositories import cv_repository
 from app.services.ia_service import implementar_IA
 
 
+
 async def guardar_cv(datos, id_usuario: int):
     id_cv = cv_repository.insertar_curriculum(datos, id_usuario)
     cv_repository.insertar_datos_personales(id_cv, datos)
@@ -46,3 +47,4 @@ async def eliminar_cv(id_cv: int, id_usuario: int):
     cv_repository.verificar_pertenencia(id_cv, id_usuario)
     cv_repository.eliminar_cv(id_cv)
     return {"mensaje": "CV eliminado correctamente"}
+

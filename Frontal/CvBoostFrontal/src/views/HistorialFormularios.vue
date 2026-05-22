@@ -98,7 +98,6 @@ onMounted(() => cargarHistorial())
 
       <!-- Estado: vacío -->
       <div v-else-if="cvs.length === 0" class="estado-centro estado-vacio">
-        <span class="vacio-icon">📄</span>
         <p>Todavía no has generado ningún CV.</p>
         <button @click="router.push('/forms/formulario')">Crear mi primer CV</button>
       </div>
@@ -112,7 +111,6 @@ onMounted(() => cargarHistorial())
           @click="verCv(cv.id_cv)"
         >
           <div class="cv-item-left">
-            <span class="cv-icon">📋</span>
             <div class="cv-info">
               <span class="cv-titulo">{{ cv.titulo }}</span>
               <div class="cv-meta">

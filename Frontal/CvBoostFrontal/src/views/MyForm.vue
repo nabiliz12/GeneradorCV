@@ -447,7 +447,7 @@ function onFileChange(event: Event) {
                     <circle cx="101" cy="12" r="5" fill="#b0bec5"/>
                     <path d="M91 28 q10-8 20 0" fill="#b0bec5"/>
                   </template>
-             
+
                   <rect x="8" y="36" width="60" height="8" fill="#003399" opacity="0.15"/>
                   <rect x="8" y="48" width="45" height="4" rx="1" fill="#003399" opacity="0.5"/>
                   <rect x="8" y="56" width="30" height="3" rx="1" fill="#aac4f0"/>
@@ -733,4 +733,6 @@ button.secondary { background: #f3f4f6; color: #111; }
 .loading-texts { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .loading-title { font-size: 15px; font-weight: 600; color: #111; margin: 0; }
 .loading-subtitle { font-size: 13px; color: #999; margin: 0; }
+
 </style>
+

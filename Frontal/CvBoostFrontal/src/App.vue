@@ -37,7 +37,7 @@ async function cerrarSesion() {
 
     <header class="navbar">
       <div class="logo-section" @click="$router.push('/')" style="cursor: pointer;">
-        <img src="@/assets/logo.png" class="logo-img" />
+        <img src="/logo.png" class="logo-img" />
         <span class="brand">CV AI</span>
       </div>
 
