@@ -5,9 +5,9 @@ import Login from '@/views/auth/Login.vue'
 import Registro from '@/views/auth/Registro.vue'
 import HistorialFormularios from '@/views/HistorialFormularios.vue'
 import Ajustes from '@/views/conSesion/Ajustes.vue'
-import PlantillaModerna from '@/views/plantillas/conFoto/PlantillaModerna.vue'
-import PlantillaMinimalista from '@/views/plantillas/conFoto/PlantillaMinimalista.vue'
-import PlantillaEuropass from '@/views/plantillas/conFoto/PlantillaEuropass.vue'
+import PlantillaModerna from '@/views/plantillas/PlantillaModerna.vue'
+import PlantillaMinimalista from '@/views/plantillas/PlantillaMinimalista.vue'
+import PlantillaEuropass from '@/views/plantillas/PlantillaEuropass.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
