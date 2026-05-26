@@ -27,7 +27,7 @@ function mostrarToast(msg: string, tipo: 'ok' | 'error') {
 
 onMounted(async () => {
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/usuario/perfil', {
+    const res = await fetch('http://127.0.0.1:8001/api/auth/perfil', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
     if (!res.ok) { router.push('/login'); return }
@@ -45,7 +45,7 @@ onMounted(async () => {
 async function guardarPerfil() {
   guardando.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/usuario/perfil', {
+    const res = await fetch('http://127.0.0.1:8001/api/auth/perfil', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ async function cambiarContrasena() {
   }
   guardandoPass.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/usuario/contrasena', {
+    const res = await fetch('http://127.0.0.1:8001/api/auth/contrasena', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ async function cambiarContrasena() {
 async function eliminarCuenta() {
   eliminando.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/usuario', {
+    const res = await fetch('http://127.0.0.1:8001/api/auth/usuario', {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })

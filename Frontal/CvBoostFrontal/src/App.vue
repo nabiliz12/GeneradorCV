@@ -1,15 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { d } from 'vue-router/dist/index-BzEKChPW.js'
+import { ref, onMounted, watch } from 'vue'
+import { RouterLink, RouterView, useRouter,useRoute  } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 const estaLogueado = ref(false)
 const nombreUsuario = ref('')
 
-onMounted(async () => {
+function actualizarEstadoSesion() {
   estaLogueado.value = !!localStorage.getItem('token')
   nombreUsuario.value = localStorage.getItem('nombre') || ''
+}
+onMounted(() => {
+  actualizarEstadoSesion()
+})
+// Se re-ejecuta en cada cambio de ruta
+
+watch(() => route.path, () => {
+  actualizarEstadoSesion()
 })
 
 const menuAbierto = ref(false)
@@ -66,7 +74,7 @@ async function cerrarSesion() {
             Mis CVs
           </div>
           <div class="dropdown-divider"></div>
-          <div class="dropdown-item" @click="router.push('/login/ajustes'); menuAbierto = false">
+          <div class="dropdown-item" @click="router.push('/ajustes'); menuAbierto = false">
             Ajustes
           </div>
           <div class="dropdown-item danger" @click="cerrarSesion">

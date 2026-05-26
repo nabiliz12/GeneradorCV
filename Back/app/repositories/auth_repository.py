@@ -32,7 +32,28 @@ async def obtener_usuario(datos: UsuarioLogin)-> dict:
     except Exception:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Error al iniciar sesión")
-    
+   
+
+async def obtener_perfil_usuario(current_user: dict) -> dict:
+    id_usuario = current_user["id_usuario"]
+    with engine.connect() as db:
+        try:
+            usuario = db.execute(text("""
+                SELECT nombre, apellidos, email
+                FROM USUARIO WHERE id_usuario = :id_usuario
+            """), {"id_usuario": id_usuario}).fetchone()
+        except Exception as e:
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    return {
+        "nombre": usuario.nombre,
+        "apellidos": usuario.apellidos,
+        "email": usuario.email
+    }    
 async def crear_usuario(usuario: UsuarioRegistro):
     try:
         with engine.begin() as connection:

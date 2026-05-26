@@ -21,7 +21,7 @@ async function verificarLogin() {
     localStorage.setItem('token', data.access_token)
     localStorage.setItem('nombre', data.nombre)
     localStorage.setItem('email', email.value)
-window.location.href = '/forms'
+    window.location.href = '/'
   } catch { error.value = 'Error de conexión' }
   finally { cargando.value = false }
 }

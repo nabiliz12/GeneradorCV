@@ -34,7 +34,7 @@ const router = createRouter({
       component: Login,
     },
     {
-      path: '/login/ajustes',
+      path: '/ajustes',
       name: 'ajustes',
       component: Ajustes,
     },

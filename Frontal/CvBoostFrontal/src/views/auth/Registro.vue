@@ -24,6 +24,8 @@ async function registrarse() {
     router.push('/login')
   } catch { error.value = 'Error de conexión' }
   finally { cargando.value = false }
+
+  
 }
 </script>
 

@@ -99,7 +99,6 @@ onMounted(() => cargarHistorial())
       <!-- Estado: vacío -->
       <div v-else-if="cvs.length === 0" class="estado-centro estado-vacio">
         <p>Todavía no has generado ningún CV.</p>
-        <button @click="router.push('/forms/formulario')">Crear mi primer CV</button>
       </div>
 
       <!-- Lista de CVs -->
