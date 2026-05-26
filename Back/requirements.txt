@@ -1,24 +1,25 @@
-#segun claude
+# Web framework
 fastapi==0.135.3
 uvicorn==0.44.0
+# Base de datos
 sqlalchemy==2.0.49
 pymysql==1.1.2
+# Validación / formularios
+pydantic==2.13.4
 python-multipart==0.0.6
 # Auth / seguridad
 python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 bcrypt==5.0.0
+# HTTP client
 httpx==0.28.1
-pydantic==2.13.4
+# IA
 groq==1.2.0
+# Imágenes
 pillow==12.2.0
-
-
-npm install vue
-npm install html2pdf.js #esto de para vue pdf
-
+# Email
+resend==2.30.1
 
 # (.venv) PS C:\Users\nabil.bouihia\cvboost\Back> python -m uvicorn app.main:app --reload --port 8001                                                          
 
 
-pip install resend

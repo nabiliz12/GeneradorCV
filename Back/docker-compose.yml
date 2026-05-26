@@ -1,0 +1,24 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    command: --lower-case-table-names=1
+    environment:
+      MYSQL_ROOT_PASSWORD: abc123.
+      MYSQL_DATABASE: cv_generator
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+  backend:
+    build: .
+    restart: always
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+volumes:
+  mysql_data:

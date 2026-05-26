@@ -1,0 +1,8 @@
+docker-compose up --build
+docker-compose down -v  sin v si quiero guardar los datos
+
+
+
+docker-compose up
+
+2. docker-compose up -d    ← la -d lo deja corriendo en background

@@ -1,0 +1,4 @@
+npm install vue
+npm install html2pdf.js #esto de para vue pdf
+
+npm run dev
