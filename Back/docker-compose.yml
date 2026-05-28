@@ -8,8 +8,15 @@ services:
       MYSQL_DATABASE: cv_generator
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pabc123."]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build: .
     restart: always
@@ -18,7 +25,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   mysql_data:

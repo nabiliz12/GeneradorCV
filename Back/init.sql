@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS USUARIO (
 
 CREATE TABLE IF NOT EXISTS OFERTA_EMPLEO (
   id_oferta    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  titulo       VARCHAR(255) NOT NULL,
+  titulo       VARCHAR(255),
   empresa      VARCHAR(255),
   descripcion  TEXT,
   requisitos   TEXT
