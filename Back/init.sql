@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS CURRICULUM (
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   hash_control   VARCHAR(64),
   tiene_foto     TINYINT(1) DEFAULT 0,
+  foto_base64     LONGTEXT,
   plantilla      VARCHAR(20) DEFAULT 'europass',
   descripcion    TEXT,
   porcentaje     TINYINT UNSIGNED,

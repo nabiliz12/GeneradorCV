@@ -52,6 +52,7 @@ class FormDataModel(BaseModel):
     idiomas: list[Idioma]
     skills: list[str]
     foto: bool
+    foto_base64: str | None
     ofertaDeTrabajo: OfertaDeTrabajo
     plantilla: str | None
 

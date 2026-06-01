@@ -45,6 +45,7 @@ const formulario = reactive({
   idiomas: [{ idioma: '', nivel: '' }],
   skills: [] as string[],
   foto: false,
+  foto_base64: null as string | null,
   ofertaDeTrabajo: { empresa: '', descripcion: '' },
 })
 
@@ -89,10 +90,7 @@ async function guardarCV() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify({
         ...formulario,
-        plantilla: plantillaSeleccionada.value,
-        foto: ponerFoto.value === true,
-        foto_base64: ponerFoto.value ? fotoPerfil.value : null,
-      }),
+        plantilla: plantillaSeleccionada.value,      }),
     })
 
     if (!response.ok) {
@@ -149,6 +147,10 @@ function onFileChange(event: Event) {
   const reader = new FileReader()
   reader.onload = () => { fotoPerfil.value = reader.result as string }
   reader.readAsDataURL(file)
+  reader.onload = () =>{
+  fotoPerfil.value = reader.result as string
+  formulario.foto_base64 = reader.result as string
+  }
 }
 </script>
 
@@ -400,10 +402,10 @@ function onFileChange(event: Event) {
         <h1>Foto de perfil</h1>
         <h2>¿Quieres añadir una foto a tu CV?</h2>
         <div class="foto-opciones">
-          <button type="button" class="foto-opcion" :class="{ selected: ponerFoto }" @click="ponerFoto = true">
+          <button type="button" class="foto-opcion" :class="{ selected: ponerFoto }" @click="ponerFoto = true ; formulario.foto = true">
             <span class="foto-opcion-label">Sí, añadir foto</span>
           </button>
-          <button type="button" class="foto-opcion" :class="{ selected: !ponerFoto }" @click="ponerFoto = false">
+          <button type="button" class="foto-opcion" :class="{ selected: !ponerFoto }" @click="ponerFoto = false; formulario.foto = false; formulario.foto_base64 = null;">
             <span class="foto-opcion-label">Sin foto</span>
           </button>
         </div>

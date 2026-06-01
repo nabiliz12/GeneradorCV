@@ -12,6 +12,9 @@ async def guardar_cv(datos, id_usuario: int):
     cv_repository.insertar_experiencia(id_cv, datos.experiencia)
     cv_repository.insertar_idiomas(id_cv, datos.idiomas)
     cv_repository.insertar_skills(id_cv, datos.skills)
+    if datos.foto:
+        cv_repository.insertar_foto(id_cv, datos.foto_base64)
+        
     cv_repository.insertar_oferta(id_cv, datos.ofertaDeTrabajo)
 
     textoDescripcion, porcentaje = await implementar_IA(datos.dict())
