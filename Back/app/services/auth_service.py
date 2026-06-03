@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.repositories import auth_repository
 from app.models.models import UsuarioLogin, UsuarioRegistro
-from app.core.security import decodificar_token
+from app.core.security import *
 
 security = HTTPBearer()
 

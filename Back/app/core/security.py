@@ -34,5 +34,3 @@ def decodificar_token(token: str) -> dict:
     except JWTError:
         return None
     
-def cerrar_sesion(token: str):
-    _tokens_invalidados.add(token)

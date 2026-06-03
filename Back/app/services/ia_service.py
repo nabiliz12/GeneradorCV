@@ -3,8 +3,6 @@ import json
 import traceback
 
 
-#lA no tiene sentido pasar por un router porque no es un endpoint HTTP, es solo lógica interna que llaman otros servicios.
-
 
 async def implementar_IA(datos: dict):
     nombre = datos.get("datosPersonales", {}).get("nombre", "")
