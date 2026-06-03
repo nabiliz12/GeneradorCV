@@ -125,7 +125,7 @@ async function guardarCV() {
           </div>
         </div>
         <img v-if="cvData.foto && cvData.foto_base64" :src="cvData.foto_base64" class="ep-photo" alt="Foto de perfil" />
-  
+
       </header>
 
       <div class="ep-name-bar">

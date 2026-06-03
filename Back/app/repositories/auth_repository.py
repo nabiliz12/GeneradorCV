@@ -2,12 +2,12 @@
 import traceback
 from datetime import datetime
 
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException
 from sqlalchemy import text
 
 from app.core.database import engine
 from app.models.models import UsuarioLogin, UsuarioRegistro
-from app.core import security
+from app.core.security import *
 
 async def obtener_usuario(datos: UsuarioLogin)-> dict:
     try:
@@ -18,21 +18,20 @@ async def obtener_usuario(datos: UsuarioLogin)-> dict:
             )
             usuario = result.fetchone()
 
-            if not usuario or not security.verificar_password(datos.contrasena, usuario.contrasena):
+            if not usuario or not verificar_password(datos.contrasena, usuario.contrasena):
                 raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
-            token = security.crear_token({"id_usuario": usuario.id_usuario, "email": datos.email})
+            token = crear_token({"id_usuario": usuario.id_usuario, "email": datos.email})
             return {
                 "access_token": token,
                 "token_type": "bearer",
-                "nombre": usuario.nombre  # ← aquí
+                "nombre": usuario.nombre 
             }
     except HTTPException:
         raise
     except Exception:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Error al iniciar sesión")
-   
 
 async def obtener_perfil_usuario(current_user: dict) -> dict:
     id_usuario = current_user["id_usuario"]
@@ -73,7 +72,7 @@ async def crear_usuario(usuario: UsuarioRegistro):
                     "nombre": usuario.nombre,
                     "apellidos": usuario.apellidos,
                     "email": usuario.email,
-                    "contrasena": security.hashear_password(usuario.contrasena),  # ← hasheada
+                    "contrasena": hashear_password(usuario.contrasena),  # ← hasheada
                     "fecha_creacion": datetime.now()
                 }
             )
@@ -90,7 +89,7 @@ async def actualizar_usuario(datos: dict, current_user: dict):
         try:
             db.execute(text("""
                 UPDATE USUARIO
-                SET nombre = :nombre, apellidos = :apellidos, email = :email
+                SET nombre = :nombre, apellidos = :apellidos
                 WHERE id_usuario = :id_usuario
             """), {**datos, "id_usuario": id_usuario})
             db.commit()
@@ -104,18 +103,18 @@ async def cambiar_contraseña(datos: dict, current_user: dict):
     with engine.connect() as db:
         try:
             usuario = db.execute(text("""
-                SELECT contraseña FROM USUARIO WHERE id_usuario = :id_usuario
+                SELECT contrasena FROM USUARIO WHERE id_usuario = :id_usuario
             """), {"id_usuario": id_usuario}).fetchone()
 
             if not usuario:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-            if not verificar_password(datos["contrasena_actual"], usuario.contraseña):
+            if not verificar_password(datos["contrasena_actual"], usuario.contrasena):
                 raise HTTPException(status_code=400, detail="Contraseña actual incorrecta")
 
             db.execute(text("""
-                UPDATE USUARIO SET contraseña = :nueva_contraseña WHERE id_usuario = :id_usuario
-            """), {"nueva_contraseña": hashear_password(datos["nueva_contraseña"]), "id_usuario": id_usuario})
+                UPDATE USUARIO SET contrasena = :nueva_contrasena WHERE id_usuario = :id_usuario
+            """), {"nueva_contrasena": hashear_password(datos["nueva_contrasena"]), "id_usuario": id_usuario})
 
             db.commit()
         except Exception as e:
@@ -153,3 +152,4 @@ async def eliminar_usuario(current_user: dict):
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
     return {"mensaje": "Cuenta eliminada"}
+

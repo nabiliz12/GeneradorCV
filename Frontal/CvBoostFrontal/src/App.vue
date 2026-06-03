@@ -23,20 +23,13 @@ watch(() => route.path, () => {
 const menuAbierto = ref(false)
 
 async function cerrarSesion() {
-  try{
-    await fetch('http://127.0.0.1:8001/api/cerrar_sesion', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    })
-  } catch (error) {
-    console.error('Error al cerrar sesión:', error)
-  }
+
   localStorage.removeItem('token')
   localStorage.removeItem('nombre')
   localStorage.removeItem('email')
   estaLogueado.value = false
   menuAbierto.value = false
-  router.push('/')
+  router.push('/login')
 }
 </script>
 
@@ -46,7 +39,7 @@ async function cerrarSesion() {
     <header class="navbar">
       <div class="logo-section" @click="$router.push('/')" style="cursor: pointer;">
         <img src="/logo.png" class="logo-img" />
-        <span class="brand">CV AI</span>
+        <span class="brand">Crea CV</span>
       </div>
 
       <nav class="navigation">

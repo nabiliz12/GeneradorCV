@@ -45,7 +45,7 @@ onMounted(async () => {
 async function guardarPerfil() {
   guardando.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/auth/perfil', {
+    const res = await fetch('http://127.0.0.1:8001/api/auth/actualizar_perfil', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ async function cambiarContrasena() {
   }
   guardandoPass.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/auth/contrasena', {
+    const res = await fetch('http://127.0.0.1:8001/api/auth/cambiar_contraseña', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

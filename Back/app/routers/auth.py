@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 
 from app.services import auth_service
 from app.models.models import UsuarioLogin, UsuarioRegistro
@@ -34,9 +34,5 @@ async def obtener_perfil_usuario(current_user: dict = Depends(get_current_user))
 @app.delete("/usuario")
 async def eliminar_cuenta(current_user: dict = Depends(get_current_user)):
     return await auth_service.eliminar_cuenta(current_user)
-
-@app.post("/cerrar_sesion")
-async def cerrar_sesion(current_user: dict = Depends(get_current_user)):
-    return await auth_service.cerrar_sesion(current_user)
 
 
