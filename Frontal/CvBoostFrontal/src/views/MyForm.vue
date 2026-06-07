@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import router from '@/router'
 import { reactive, ref, computed } from 'vue'
+import DatosPersonales from './components/datosPersonales.vue'
+import Educacion from './components/Educacion.vue'
+import { useCvFormStore } from '@/store/cvFormStore.ts'
+import Certificaciones from './components/Certificaciones.vue'
+import Experiencia from './components/Experiencia.vue'
+import Idiomas from './components/Idiomas.vue'
+import Skills from './components/Skills.vue'
+
+const store=useCvFormStore()
+
 
 const pagina = ref(1) // para saber en que pagina estoy
 const ponerFoto = ref(false) // para saber si el usuario quiere foto o no, así se la pasamos al backend y él decide si la incluye o no en el CV generado
@@ -9,7 +19,7 @@ const fotoPerfil = ref<string | null>(null) // para almacenar la foto de perfil 
 const nuevaSkill = ref('')
 const intentoAvanzar = ref(false) // que rellene lo que tenga que rellenar para poder pasar a la siguiente pagina
 const totalPaginas = 9 // es el total de paginas
-const progreso = computed(() => Math.round((pagina.value / totalPaginas) * 100)) //
+ //
 const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const aniosDisponibles = Array.from({ length: 50 }, (_, i) => String(new Date().getFullYear() - i))// crea un array de los ultimos 50 años para los selects de fechas
 
@@ -21,18 +31,6 @@ const plantillas = [
   { id: 'moderna',     label: 'Moderna',     desc: 'Dark sidebar con acento verde' },
 ]
 
-// ── CARGA IA ──
-const cargando = ref(false)
-const mensajesCarga = [
-  'Analizando tu perfil...',
-  'Redactando el perfil profesional...',
-  'Ajustando el tono y estilo...',
-  'Aplicando el formato final...',
-  'Casi listo...'
-]
-
-const mensajeCargaActual = ref(mensajesCarga[0])
-let intervaloMensajes: ReturnType<typeof setInterval> | null = null
 
 const formulario = reactive({
   datosPersonales: {
@@ -75,13 +73,6 @@ function paginaEsValida(num: number): boolean {
 }
 
 async function guardarCV() {
-  cargando.value = true
-  mensajeCargaActual.value = mensajesCarga[0]
-  let i = 0
-  intervaloMensajes = setInterval(() => {
-    i = (i + 1) % mensajesCarga.length
-    mensajeCargaActual.value = mensajesCarga[i]
-  }, 2000)
 
   //peticion http
   try {
@@ -109,8 +100,7 @@ async function guardarCV() {
     }
     router.push(rutas[plantillaSeleccionada.value])
   } finally {
-    if (intervaloMensajes) clearInterval(intervaloMensajes)
-    cargando.value = false
+
   }
 }
 
@@ -158,225 +148,41 @@ function onFileChange(event: Event) {
   <div class="page">
     <div class="card">
 
-      <!-- OVERLAY DE CARGA IA -->
-      <div v-if="cargando" class="loading-overlay">
-        <div class="loading-card">
-          <div class="loading-spinner"></div>
-          <div class="loading-texts">
-            <p class="loading-title">Generando tu CV</p>
-            <p class="loading-subtitle">{{ mensajeCargaActual }}</p>
-          </div>
-        </div>
-      </div>
 
       <!-- BARRA DE PROGRESO -->
       <div class="progress-wrap">
         <div class="progress-header">
-          <span class="progress-step">Paso {{ pagina }} de {{ totalPaginas }}</span>
-          <span class="progress-pct">{{ progreso }}%</span>
+          <span class="progress-step">Paso {{ store.pagina }} de {{ store.totalPaginas }}</span>
+          <span class="progress-pct">{{ store.progreso }}%</span>
         </div>
         <div class="progress-track">
-          <div class="progress-fill" :style="{ width: progreso + '%' }"></div>
+          <div class="progress-fill" :style="{ width: store.progreso + '%' }"></div>
         </div>
       </div>
 
       <!-- PAGE 1: Datos personales -->
-      <div v-if="pagina === 1">
-        <h1>Datos personales</h1>
-        <div class="grid">
-          <div class="row-2">
-            <div class="field-wrap">
-              <input v-model="formulario.datosPersonales.nombre" placeholder="Nombre" :class="claseCampo(estadoCampo(formulario.datosPersonales.nombre))" />
-              <span v-if="estadoCampo(formulario.datosPersonales.nombre) === 'error'" class="hint hint--error">Obligatorio</span>
-            </div>
-            <div class="field-wrap">
-              <input v-model="formulario.datosPersonales.apellido" placeholder="Apellido" :class="claseCampo(estadoCampo(formulario.datosPersonales.apellido))" />
-              <span v-if="estadoCampo(formulario.datosPersonales.apellido) === 'error'" class="hint hint--error">Obligatorio</span>
-            </div>
-          </div>
-          <div class="field-wrap">
-            <input v-model="formulario.datosPersonales.email" placeholder="Email" />
-          </div>
-          <div class="field-wrap">
-            <input v-model="formulario.datosPersonales.telefono" placeholder="Teléfono" :class="claseCampo(estadoCampo(formulario.datosPersonales.telefono))" />
-            <span v-if="estadoCampo(formulario.datosPersonales.telefono) === 'error'" class="hint hint--error">Obligatorio</span>
-          </div>
-          <div class="field-wrap">
-            <input v-model="formulario.datosPersonales.direccion" placeholder="Dirección" :class="claseCampo(estadoCampo(formulario.datosPersonales.direccion))" />
-            <span v-if="estadoCampo(formulario.datosPersonales.direccion) === 'error'" class="hint hint--error">Obligatorio</span>
-          </div>
-          <div class="row-2">
-            <div class="field-wrap">
-              <input v-model="formulario.datosPersonales.codigoPostal" placeholder="Código Postal" :class="claseCampo(estadoCampo(formulario.datosPersonales.codigoPostal))" />
-              <span v-if="estadoCampo(formulario.datosPersonales.codigoPostal) === 'error'" class="hint hint--error">Obligatorio</span>
-            </div>
-            <div class="field-wrap">
-              <input v-model="formulario.datosPersonales.localidad" placeholder="Localidad" :class="claseCampo(estadoCampo(formulario.datosPersonales.localidad))" />
-              <span v-if="estadoCampo(formulario.datosPersonales.localidad) === 'error'" class="hint hint--error">Obligatorio</span>
-            </div>
-          </div>
-          <div class="toggle-row">
-            <div class="toggle-info">
-              <div>
-                <span class="toggle-label">Permiso de conducir</span>
-                <span class="toggle-sub">Incluir en el CV</span>
-              </div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" v-model="formulario.datosPersonales.permisoConducir" />
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            </label>
-          </div>
-        </div>
-        <button @click="siguientePagina" type="button">Siguiente</button>
-      </div>
+      <DatosPersonales></DatosPersonales>
+
+
 
       <!-- PAGE 2: Educación -->
-      <div v-if="pagina === 2">
-        <h1>Educación <span class="opcional-badge">Opcional</span></h1>
-        <div class="chips-list">
-          <div v-for="(edu, index) in formulario.educacion" :key="index" class="item-chip">
-            <div class="chip-fields">
-              <input v-model="edu.titulo" placeholder="Título obtenido" class="chip-input" />
-              <input v-model="edu.institucion" placeholder="Institución" class="chip-input" />
-              <div class="fecha-row">
-                <span class="fecha-label">Inicio</span>
-                <div class="fecha-selects">
-                  <select v-model="edu.mesInicio" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                  <select v-model="edu.anioInicio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                </div>
-              </div>
-              <div class="fecha-row">
-                <span class="fecha-label">Fin</span>
-                <div class="fecha-selects">
-                  <template v-if="!edu.actualidad">
-                    <select v-model="edu.mesFin" class="chip-select-sm" :disabled="edu.actualidad"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                    <select v-model="edu.anioFin" class="chip-select-sm" :disabled="edu.actualidad"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                  </template>
-                  <label class="actualidad-check">
-                    <input type="checkbox" v-model="edu.actualidad" @change="if(edu.actualidad){ edu.mesFin=''; edu.anioFin='' }" />
-                    <span>Actualidad</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <button v-if="formulario.educacion.length > 1" @click="eliminarEducacion(index)" type="button" class="chip-remove">✕</button>
-          </div>
-        </div>
-        <button @click="agregarEducacion" type="button" class="btn-add">+ Agregar educación</button>
-        <div class="nav-buttons">
-          <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="siguientePagina" type="button">Siguiente</button>
-        </div>
-      </div>
+      <Educacion></Educacion>
+
+
+
 
       <!-- PAGE 3: Certificaciones -->
-      <div v-if="pagina === 3">
-        <h1>Certificaciones <span class="opcional-badge">Opcional</span></h1>
-        <div class="chips-list">
-          <div v-for="(cert, index) in formulario.certificaciones" :key="index" class="item-chip">
-            <div class="chip-fields">
-              <input v-model="cert.certificacion" placeholder="Certificación" class="chip-input" />
-              <div class="fecha-row">
-                <span class="fecha-label">Expedición</span>
-                <div class="fecha-selects">
-                  <select v-model="cert.mes" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                  <select v-model="cert.anio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                </div>
-              </div>
-            </div>
-            <button @click="eliminarCertificacion(index)" type="button" class="chip-remove">✕</button>
-          </div>
-        </div>
-        <button @click="agregarCertificacion" type="button" class="btn-add">+ Agregar certificación</button>
-        <div class="nav-buttons">
-          <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="siguientePagina" type="button">Siguiente</button>
-        </div>
-      </div>
+      <Certificaciones></Certificaciones>
 
       <!-- PAGE 4: Experiencia -->
-      <div v-if="pagina === 4">
-        <h1>Experiencia <span class="opcional-badge">Opcional</span></h1>
-        <div class="chips-list">
-          <div v-for="(exp, index) in formulario.experiencia" :key="index" class="item-chip">
-            <div class="chip-fields">
-              <input v-model="exp.cargo" placeholder="Cargo" class="chip-input" />
-              <input v-model="exp.empresa" placeholder="Empresa" class="chip-input" />
-              <div class="fecha-row">
-                <span class="fecha-label">Inicio</span>
-                <div class="fecha-selects">
-                  <select v-model="exp.mesInicio" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                  <select v-model="exp.anioInicio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                </div>
-              </div>
-              <div class="fecha-row">
-                <span class="fecha-label">Fin</span>
-                <div class="fecha-selects">
-                  <template v-if="!exp.actualidad">
-                    <select v-model="exp.mesFin" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                    <select v-model="exp.anioFin" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                  </template>
-                  <label class="actualidad-check">
-                    <input type="checkbox" v-model="exp.actualidad" @change="if(exp.actualidad){ exp.mesFin=''; exp.anioFin='' }" />
-                    <span>Actualidad</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <button v-if="formulario.experiencia.length > 1" @click="eliminarExperiencia(index)" type="button" class="chip-remove">✕</button>
-          </div>
-        </div>
-        <button @click="agregarExperiencia" type="button" class="btn-add">+ Agregar experiencia</button>
-        <div class="nav-buttons">
-          <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="siguientePagina" type="button">Siguiente</button>
-        </div>
-      </div>
+      <Experiencia></Experiencia>
 
       <!-- PAGE 5: Idiomas -->
-      <div v-if="pagina === 5">
-        <h1>Idiomas <span class="opcional-badge">Opcional</span></h1>
-        <div class="chips-list">
-          <div v-for="(idioma, index) in formulario.idiomas" :key="index" class="item-chip item-chip--row">
-            <div class="field-wrap" style="flex:1">
-              <input v-model="idioma.idioma" placeholder="Idioma" class="chip-input" />
-            </div>
-            <div class="field-wrap" style="flex:0 0 130px">
-              <select v-model="idioma.nivel" class="chip-select">
-                <option disabled value="">Nivel</option>
-                <option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option>
-              </select>
-            </div>
-            <button @click="eliminarIdioma(index)" type="button" class="chip-remove">✕</button>
-          </div>
-        </div>
-        <button @click="agregarIdioma" type="button" class="btn-add">+ Agregar idioma</button>
-        <div class="nav-buttons">
-          <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="siguientePagina" type="button">Siguiente</button>
-        </div>
-      </div>
+      <Idiomas></Idiomas>
+
 
       <!-- PAGE 6: Skills -->
-      <div v-if="pagina === 6">
-        <h1>Skills <span class="opcional-badge">Opcional</span></h1>
-        <h2>Añade tus habilidades técnicas o personales</h2>
-        <div v-if="formulario.skills.length > 0" class="skills-tags">
-          <span v-for="(skill, index) in formulario.skills" :key="index" class="skill-tag">
-            {{ skill }}
-            <button @click="eliminarSkill(index)" type="button" class="skill-tag-remove">✕</button>
-          </span>
-        </div>
-        <div class="skill-input-row">
-          <input v-model="nuevaSkill" placeholder="Ej: JavaScript, Trabajo en equipo..." @keydown="agregarSkillConEnter" />
-          <button @click="agregarSkill" type="button" class="btn-skill-add">+</button>
-        </div>
-        <div class="nav-buttons">
-          <button @click="anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="siguientePagina" type="button">Siguiente</button>
-        </div>
-      </div>
+      <Skills></Skills>
 
       <!-- PAGE 7: Oferta de trabajo -->
       <div v-if="pagina === 7">
@@ -575,6 +381,10 @@ function onFileChange(event: Event) {
 </template>
 
 <style scoped>
+:deep(.grid) { display: flex; flex-direction: column; gap: 12px; }
+:deep(.field-wrap) { display: flex; flex-direction: column; gap: 3px; }
+:deep(.row-2) { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
 .page {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, #f7f7f8, #ffffff);
@@ -592,7 +402,8 @@ h2 { font-size: 14px; font-weight: 500; color: #555; margin-bottom: 16px; }
 .opcional-badge { font-size: 11px; font-weight: 500; background: #f3f4f6; color: #888; border-radius: 6px; padding: 2px 8px; }
 .grid { display: flex; flex-direction: column; gap: 12px; }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.field-wrap { display: flex; flex-direction: column; gap: 3px; }
+.field-wrap { display: flex; flex-direction: column; gap: 3px;   margin-bottom: 4px;
+}
 .hint { font-size: 11.5px; font-weight: 500; padding-left: 2px; animation: hintIn 0.15s ease; }
 .hint--error { color: #d97706; }
 .hint--ok { color: #16a34a; }
