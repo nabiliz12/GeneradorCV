@@ -39,7 +39,7 @@ async function cerrarSesion() {
     <header class="navbar">
       <div class="logo-section" @click="$router.push('/')" style="cursor: pointer;">
         <img src="/logo.png" class="logo-img" />
-        <span class="brand">Crea CV</span>
+        <span class="brand">Generador CV</span>
       </div>
 
       <nav class="navigation">
