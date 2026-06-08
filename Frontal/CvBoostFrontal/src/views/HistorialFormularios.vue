@@ -265,9 +265,7 @@ h1 { font-size: 18px; font-weight: 600; color: #111; }
 }
 .btn-ver { background: #f3f4f6; }
 .btn-ver:hover { background: #e0e7ff; }
-.btn-eliminar { background: #f3f4f6; }
-.btn-eliminar:hover { background: #fee2e2; }
-.btn-eliminar:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-eliminar { background: #fee2e2 !important; color: #b91c1c !important; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }

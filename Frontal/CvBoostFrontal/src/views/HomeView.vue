@@ -28,7 +28,6 @@ function irAlFormulario() {
     </button>
 
 
-
   </section>
 </template>
 
@@ -39,24 +38,26 @@ function irAlFormulario() {
   align-items: center;
   text-align: center;
   padding: 110px 20px;
-  background: #ffffff; /* 🔥 importante */
+  background: #ffffff;
 }
 
-h1 {
-  font-size: 46px;
-  font-weight: 800;
-  color: #111;
+.hero h1 {
+  font-size: 46px !important;
+  font-weight: 800 !important;
+  color: #111 !important;
   max-width: 800px;
-  line-height: 1.1;
+  line-height: 1.1 !important;
+  display: block !important;
+  margin-bottom: 0 !important;
 }
 
-h1 span {
+.hero h1 span {
   background: linear-gradient(90deg, #000, #666);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-p {
+.hero p {
   font-size: 17px;
   color: #666;
   margin-top: 16px;
@@ -64,6 +65,7 @@ p {
 }
 
 .btn-modern {
+  width: auto !important;
   margin-top: 30px;
   background: #111;
   color: white;
@@ -78,11 +80,5 @@ p {
   opacity: 0.9;
   transform: translateY(-1px);
   transition: 0.2s;
-}
-
-.mini-text {
-  margin-top: 14px;
-  font-size: 13px;
-  color: #888;
 }
 </style>

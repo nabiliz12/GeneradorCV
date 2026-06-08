@@ -7,8 +7,8 @@ export const useCvFormStore=defineStore('cvForm',()=>{
   const pagina=ref(1)
   const totalPaginas = 10
   const progreso = computed(() => Math.round((pagina.value / totalPaginas) * 100))
-
   const intentoAvanzar=ref(false)
+  const ponerFotoParaDialog = ref(false)
 
   const formulario = reactive({
   datosPersonales: {
@@ -61,6 +61,6 @@ function paginaEsValida(num: number): boolean {
     pagina.value--;
   }
 
-  return {pagina,totalPaginas,progreso,intentoAvanzar,formulario,siguientePagina,anteriorPagina}
+  return {pagina,totalPaginas,progreso,intentoAvanzar,formulario,siguientePagina,anteriorPagina,ponerFotoParaDialog}
 
 })

@@ -370,6 +370,8 @@ async function guardarCV() {
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
   transition: opacity 0.2s, transform 0.2s;
   z-index: 9999;
+  width: auto !important;
+  margin-top: 0 !important;
 }
 .btn-save:disabled {
   opacity: 0.4;
