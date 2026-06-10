@@ -346,16 +346,11 @@ async function guardarCV() {
 .match-verde    { background: #2e7d32; }
 .match-number { font-size: 16px; font-weight: 700; color: #fff; line-height: 1; font-family: 'Lato', sans-serif; }
 .match-label  { font-size: 9px; color: rgba(255,255,255,0.85); font-weight: 500; letter-spacing: 0.5px; font-family: 'Lato', sans-serif; }
-.btn-download {
-  position: fixed; bottom: 28px; left: 28px; display: flex; align-items: center; gap: 8px;
-  background: #111; color: white; border: none; padding: 10px 18px; border-radius: 10px;
-  font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  transition: opacity 0.2s, transform 0.2s; z-index: 9999;
-}
+
+.btn-download,
 .btn-save {
   position: fixed;
   bottom: 28px;
-  left: 180px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -373,10 +368,9 @@ async function guardarCV() {
   width: auto !important;
   margin-top: 0 !important;
 }
-.btn-save:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.btn-download { left: 28px; }
+.btn-save     { left: 180px; }
+.btn-save:disabled { opacity: 0.35; cursor: not-allowed; }
 @media print {
   .cv-bg { background: none; padding: 0; }
   .cv { box-shadow: none; padding: 20px; width: 100%; }

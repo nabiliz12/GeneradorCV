@@ -36,8 +36,8 @@ async def editar_cv(id_cv: int, datos: dict, id_usuario: int):
     cv_repository.reemplazar_certificaciones(id_cv, datos.get("certificaciones", []))
     cv_repository.reemplazar_skills(id_cv, datos.get("skills", []))
 
-    textoDescripcion, porcentaje = await implementar_IA(datos)
-    cv_repository.actualizar_ia(id_cv, textoDescripcion, porcentaje)
+    descripcion, porcentaje = datos["descripcion"],datos["porcentaje"]
+    cv_repository.actualizar_ia(id_cv, descripcion, porcentaje)
 
     return {"mensaje": "CV actualizado correctamente", "id_cv": id_cv}
 

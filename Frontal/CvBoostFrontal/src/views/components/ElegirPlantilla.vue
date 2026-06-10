@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import router from '@/router';
+import { useRouter } from 'vue-router'
 import { useCvFormStore } from '@/store/cvFormStore';
 import { ref } from 'vue';
+
 const store=useCvFormStore()
-
+const router = useRouter()
 const plantillaSeleccionada = ref<'europass' | 'minimalista' | 'moderna'>('europass')
-
+const cargando=ref(false)
 const plantillas = [
   { id: 'europass',    label: 'Europass',    desc: 'Formato oficial europeo' },
   { id: 'minimalista', label: 'Minimalista', desc: 'Limpio y sencillo' },
@@ -13,7 +14,7 @@ const plantillas = [
 ]
 
 async function guardarCV() {
-
+  cargando.value=true
   //peticion http
   try {
     const response = await fetch('http://127.0.0.1:8001/api/cv', {
@@ -40,7 +41,7 @@ async function guardarCV() {
     }
     router.push(rutas[plantillaSeleccionada.value])
   } finally {
-
+    cargando.value=false
   }
 }
 
@@ -196,6 +197,12 @@ async function guardarCV() {
           <button @click="guardarCV()" type="button">Generar CV</button>
         </div>
       </div>
+      <Teleport to="body">
+          <div v-if="cargando" class="cv-overlay">
+            <div class="spinner"></div>
+            <p class="cv-text">Generando tu CV…</p>
+          </div>
+        </Teleport>
 
 
 </template>
@@ -219,4 +226,8 @@ h2 { font-size: 14px; font-weight: 500; color: #555; margin-bottom: 16px; }
 button { border: none; background: #111; color: white; padding: 10px 14px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 12px; transition: 0.2s; width: 100%; }
 button:hover { transform: translateY(-1px); opacity: 0.9; }
 button.secondary { background: #f3f4f6; color: #111; }
+.cv-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; z-index: 9999; }
+.spinner { width: 44px; height: 44px; border: 4px solid #e7e7e7; border-top-color: #111; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.cv-text { font-size: 15px; font-weight: 600; color: #111; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>

@@ -61,6 +61,26 @@ function paginaEsValida(num: number): boolean {
     pagina.value--;
   }
 
-  return {pagina,totalPaginas,progreso,intentoAvanzar,formulario,siguientePagina,anteriorPagina,ponerFotoParaDialog}
+
+function resetear() {
+  pagina.value = 1
+  intentoAvanzar.value = false
+  ponerFotoParaDialog.value = false
+  Object.assign(formulario.datosPersonales, {
+    nombre: '', apellido: '', email: '', telefono: '',
+    direccion: '', codigoPostal: '', localidad: '', permisoConducir: false
+  })
+  formulario.educacion = [{ titulo: '', institucion: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }]
+  formulario.certificaciones = [{ certificacion: '', mes: '', anio: '' }]
+  formulario.experiencia = [{ cargo: '', empresa: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }]
+  formulario.idiomas = [{ idioma: '', nivel: '' }]
+  formulario.skills = []
+  formulario.foto = false
+  formulario.foto_base64 = null
+  formulario.ofertaDeTrabajo = { empresa: '', descripcion: '' }
+}
+
+
+  return {pagina,totalPaginas,progreso,intentoAvanzar,formulario,siguientePagina,anteriorPagina,ponerFotoParaDialog,resetear}
 
 })

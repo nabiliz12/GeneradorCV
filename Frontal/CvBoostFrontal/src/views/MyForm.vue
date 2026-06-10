@@ -9,8 +9,11 @@ import Skills from './components/Skills.vue'
 import OfertaDeTrabajo from './components/OfertaDeTrabajo.vue'
 import FotoDePerfil from './components/FotoDePerfil.vue'
 import ElegirPlantilla from './components/ElegirPlantilla.vue'
+import { onUnmounted } from 'vue'
 
 const store=useCvFormStore()
+onUnmounted(() => store.resetear())
+
 
 </script>
 
