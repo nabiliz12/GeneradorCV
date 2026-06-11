@@ -7,7 +7,7 @@ from passlib.context import CryptContext
  #instalarlo 
 SECRET_KEY = "cambia_esto_por_algo_seguro_en_produccion"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 día
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 días
 
 pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 

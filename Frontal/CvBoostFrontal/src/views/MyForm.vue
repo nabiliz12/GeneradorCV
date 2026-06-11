@@ -14,7 +14,6 @@ import { onUnmounted } from 'vue'
 const store=useCvFormStore()
 onUnmounted(() => store.resetear())
 
-
 </script>
 
 <template>
@@ -35,7 +34,6 @@ onUnmounted(() => store.resetear())
 
       <!-- PAGE 1: Datos personales -->
       <DatosPersonales></DatosPersonales>
-
 
 
       <!-- PAGE 2: Educación -->

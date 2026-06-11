@@ -151,13 +151,19 @@ async function guardarCV() {
               @blur="cvData.datosPersonales.telefono = ($event.target as HTMLElement).innerText.trim()"
             >{{ cvData.datosPersonales?.telefono }}</span>
           </div>
-          <div class="sb-item">
-            <span class="sb-icon">📍</span>
-            <span
-              contenteditable="true"
-              @blur="cvData.datosPersonales.direccion = ($event.target as HTMLElement).innerText.trim()"
-            >{{ cvData.datosPersonales?.direccion }}, {{ cvData.datosPersonales?.localidad }}</span>
-          </div>
+            <div class="sb-item">
+              <span class="sb-icon">📍</span>
+              <span>
+                <span
+                  contenteditable="true"
+                  @blur="cvData.datosPersonales.direccion = ($event.target as HTMLElement).innerText.trim()"
+                >{{ cvData.datosPersonales?.direccion }}</span>,
+                <span
+                  contenteditable="true"
+                  @blur="cvData.datosPersonales.localidad = ($event.target as HTMLElement).innerText.trim()"
+                >{{ cvData.datosPersonales?.localidad }}</span>
+              </span>
+            </div>
           <div v-if="cvData.datosPersonales?.permiso_conducir" class="sb-item">
             <span class="sb-icon">🚗</span><span>Permiso B</span>
           </div>

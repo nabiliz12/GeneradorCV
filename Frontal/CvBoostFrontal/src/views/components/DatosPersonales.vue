@@ -3,17 +3,15 @@ import { useCvFormStore } from '@/store/cvFormStore';
 
 const store=useCvFormStore()
 
-function estadoCampo(val: string): 'idle' | 'error' | 'ok' { // devuelve el estado del campo para mostrar borde rojo o verde o ninguno
-    if (!store.intentoAvanzar) return val.trim() ? 'ok' : 'idle'
-    return val.trim() ? 'ok' : 'error'
+function estadoCampo(val: string): 'idle' | 'error' {
+  if (!store.intentoAvanzar) return 'idle'
+  return val.trim() ? 'idle' : 'error'
 }
 
-function claseCampo(estado: 'idle' | 'error' | 'ok') { // devuelve la clase css segun el estado del campo
+function claseCampo(estado: 'idle' | 'error') {
   if (estado === 'error') return 'field-error'
-  if (estado === 'ok') return 'field-ok'
   return ''
 }
-
 
 </script>
 

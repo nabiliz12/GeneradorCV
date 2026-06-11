@@ -1,0 +1,21 @@
+Manual de instalación
+Pasos para poner en marcha el Generador de CV en local.
+Lo que hace falta tener instalado
+Docker y Docker Compose, Node.js (para el frontend) y una API key de Groq.
+Pasos
+1.	Descargar o clonar el proyecto.
+2.	En la carpeta del backend, crear un archivo llamado .env con este contenido:
+GROQ_API_KEY=tu_api_key_de_groq
+MYSQL_ROOT_PASSWORD=abc123.
+MYSQL_DATABASE=cv_generator
+3.	Levantar el backend y la base de datos con Docker:
+docker-compose up -d --build
+4.	Esperar unos segundos hasta que la base de datos termine de crear las tablas.
+5.	En la carpeta del frontend, instalar las dependencias y arrancarlo:
+npm install
+npm run dev
+6.	Abrir el navegador en http://localhost:5173 para usar la aplicación.
+Comprobar que funciona
+Abrir http://127.0.0.1:8001/docs. Si aparece la documentación de la API, el backend está funcionando correctamente.
+Para apagarlo todo
+docker-compose down

@@ -1,0 +1,32 @@
+Documentación de la API
+La API del backend está construida con FastAPI, que genera automáticamente documentación interactiva mediante Swagger UI, accesible en /docs una vez el backend está en ejecución.
+1. Acceso a la documentación interactiva
+http://127.0.0.1:8001/docs
+Desde esta interfaz se pueden consultar y probar todos los endpoints disponibles, ver los modelos de datos esperados (Pydantic) y las respuestas de cada operación.
+2. Autenticación
+La mayoría de los endpoints requieren autenticación mediante token JWT. El token se obtiene al iniciar sesión y debe enviarse en la cabecera Authorization de las peticiones:
+Authorization: Bearer <token>
+3. Endpoints principales
+Método	Ruta	Descripción
+POST	/api/auth/registro	Registra un nuevo usuario
+POST	/api/auth/login	Inicia sesión y devuelve un token JWT
+GET	/api/auth/perfil	Obtiene los datos del usuario autenticado
+PUT	/api/auth/actualizar_perfil	Actualiza nombre y apellidos del usuario
+PUT	/api/auth/cambiar_contraseña	Cambia la contraseña del usuario
+DELETE	/api/auth/usuario	Elimina la cuenta del usuario
+POST	/api/cv	Crea un nuevo CV a partir del formulario
+GET	/api/recuperar_cv/{id_cv}	Recupera un CV completo por su id
+POST	/api/editar_cv/{id_cv}	Edita y guarda los cambios de un CV
+GET	/api/historial	Lista los CVs del usuario autenticado
+DELETE	/api/historial/eliminar/{id_cv}	Elimina un CV del historial
+4. Ejemplo: crear un CV
+Petición POST a /api/cv, con cabecera Authorization y cuerpo JSON con la estructura del formulario (datos personales, educación, experiencia, idiomas, skills, oferta de empleo y plantilla elegida).
+La respuesta incluye el identificador del CV creado:
+{ "mensaje": "CV guardado correctamente", "id_cv": 12 }
+5. Códigos de estado habituales
+Código	Significado
+200	Operación realizada correctamente
+401	Token inválido, expirado o credenciales incorrectas
+404	Recurso no encontrado o no pertenece al usuario
+500	Error interno del servidor
+
