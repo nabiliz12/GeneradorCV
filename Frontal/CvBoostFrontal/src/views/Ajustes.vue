@@ -67,7 +67,7 @@ async function cambiarContrasena() {
   if (passNueva.value !== passConfirm.value) {
     mostrarToast('Las contraseñas no coinciden', 'error'); return
   }
-  if (passNueva.value.length < 6) {
+  if (passNueva.value.length < 3) {
     mostrarToast('La contraseña debe tener al menos 6 caracteres', 'error'); return
   }
   guardandoPass.value = true
