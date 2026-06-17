@@ -33,7 +33,6 @@ INSTRUCCIONES PARA EL PORCENTAJE:
 - Si tiene los idiomas requeridos, suma puntos.
 - El MÍNIMO es 10 aunque no cumpla nada. El MÁXIMO es 100.
 - Sé realista pero generoso: un candidato con Angular para una oferta de Angular debe sacar al menos 30.
-- Si no hay oferta, devuelve 50.
 
 INSTRUCCIONES PARA LA DESCRIPCIÓN:
 - Redacta un único párrafo de 4 a 6 líneas en primera persona.
