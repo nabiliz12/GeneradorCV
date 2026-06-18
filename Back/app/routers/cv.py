@@ -14,7 +14,7 @@ async def guardarCV(datos: FormDataModel, current_user: dict = Depends(get_curre
 async def recuperar_cv(id_cv: int, current_user: dict = Depends(get_current_user)):
     return await cv_service.recuperar_cv(id_cv, current_user["id_usuario"])
 
-@app.post("/editar_cv/{id_cv}")
+@app.put("/editar_cv/{id_cv}")
 async def editar_cv(id_cv: int, datos: dict = Body(...), current_user: dict = Depends(get_current_user)):
     return await cv_service.editar_cv(id_cv, datos, current_user["id_usuario"])
     

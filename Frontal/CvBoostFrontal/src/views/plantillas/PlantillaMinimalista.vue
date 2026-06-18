@@ -71,7 +71,7 @@ async function guardarCV() {
   console.log('CV DATA:', JSON.stringify(cvData, null, 2))
   try {
     await fetch('http://127.0.0.1:8001/api/editar_cv/' + id_cv, {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify(cvData)
     })
