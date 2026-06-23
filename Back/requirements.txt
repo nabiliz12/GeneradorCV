@@ -19,7 +19,7 @@ groq==1.2.0
 pillow==12.2.0
 # Email
 resend==2.30.1
-
+python-dotenv==1.0.1
 # (.venv) PS C:\Users\nabil.bouihia\cvboost\Back> python -m uvicorn app.main:app --reload --port 8001                                                          
 
 

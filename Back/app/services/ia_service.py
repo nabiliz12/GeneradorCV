@@ -1,8 +1,11 @@
+import os
+
 from groq import Groq
 import json
 import traceback
 
 
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 async def implementar_IA(datos: dict):
     nombre = datos.get("datosPersonales", {}).get("nombre", "")
@@ -50,7 +53,6 @@ Devuelve SOLO este JSON sin nada más:
 """
 
     try:
-        client = Groq(api_key="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")
         respuesta = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],

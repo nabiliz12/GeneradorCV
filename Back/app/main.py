@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth as registro
 from app.routers import cv
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
