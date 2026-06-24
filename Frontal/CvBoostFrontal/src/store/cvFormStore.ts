@@ -23,6 +23,7 @@ export const useCvFormStore=defineStore('cvForm',()=>{
   foto: false,
   foto_base64: null as string | null,
   ofertaDeTrabajo: { empresa: '', descripcion: '' },
+  
 })
 
 function esValido(val: string) { return val.trim().length > 0 } // para los campos obligatorios de la primera pagina, si el campo tiene texto se considera ok, si no, error (si se ha intentado avanzar) o idle (si no se ha intentado avanzar aun)
