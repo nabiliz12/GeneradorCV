@@ -27,7 +27,7 @@ function mostrarToast(msg: string, tipo: 'ok' | 'error') {
 
 onMounted(async () => {
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/auth/perfil', {
+    const res = await fetch('${import.meta.env.VITE_API_URL}/api/auth/perfil', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
     if (!res.ok) { router.push('/login'); return }
@@ -45,7 +45,7 @@ onMounted(async () => {
 async function guardarPerfil() {
   guardando.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/auth/actualizar_perfil', {
+    const res = await fetch('${import.meta.env.VITE_API_URL}/api/auth/actualizar_perfil', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ async function cambiarContrasena() {
   }
   guardandoPass.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/auth/cambiar_contraseña', {
+    const res = await fetch('${import.meta.env.VITE_API_URL}/api/auth/cambiar_contraseña', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ async function cambiarContrasena() {
 async function eliminarCuenta() {
   eliminando.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/auth/usuario', {
+    const res = await fetch('${import.meta.env.VITE_API_URL}/api/auth/usuario', {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })

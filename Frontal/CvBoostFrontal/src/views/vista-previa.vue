@@ -18,7 +18,7 @@ onMounted(async () => {
   }
 
   try {
-    const res = await fetch(`http://127.0.0.1:8001/api/recuperar_cv/${id_cv}`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/recuperar_cv/${id_cv}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
 

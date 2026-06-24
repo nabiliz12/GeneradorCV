@@ -11,7 +11,7 @@ async function verificarLogin() {
   error.value = ''
   cargando.value = true
   try {
-    const res = await fetch('http://127.0.0.1:8001/api/auth/login', {
+    const res = await fetch('${import.meta.env.VITE_API_URL}/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.value, contrasena: contrasena.value })

@@ -20,7 +20,7 @@ async function cargarHistorial() {
   try {
     cargando.value = true
     const token = localStorage.getItem('token')
-    const res = await fetch('http://127.0.0.1:8001/api/historial', {
+    const res = await fetch('${import.meta.env.VITE_API_URL}/api/historial', {
       headers: { Authorization: `Bearer ${token}` }
     })
     if (!res.ok) throw new Error(`Error ${res.status}`)
@@ -38,7 +38,7 @@ async function eliminarCv(id_cv: number) {
   eliminando.value = id_cv
   try {
     const token = localStorage.getItem('token')
-    const res = await fetch(`http://127.0.0.1:8001/api/historial/eliminar/${id_cv}`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/historial/eliminar/${id_cv}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` }
     })

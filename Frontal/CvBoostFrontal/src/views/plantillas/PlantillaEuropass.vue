@@ -45,7 +45,7 @@ const hayCambios = computed(() => JSON.stringify(cvData) !== snapshotInicial.val
 async function recogerDatos() {
   try {
     cargando.value = true
-    const response = await fetch(`http://127.0.0.1:8001/api/recuperar_cv/${id_cv}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/recuperar_cv/${id_cv}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
@@ -78,7 +78,7 @@ async function descargarCV() {
 
 async function guardarCV() {
   try {
-    await fetch(`http://127.0.0.1:8001/api/editar_cv/${id_cv}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/editar_cv/${id_cv}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify(cvData)
