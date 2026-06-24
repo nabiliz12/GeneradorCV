@@ -20,7 +20,7 @@ async function cargarHistorial() {
   try {
     cargando.value = true
     const token = localStorage.getItem('token')
-    const res = await fetch('${import.meta.env.VITE_API_URL}/api/historial', {
+   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/historial`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     if (!res.ok) throw new Error(`Error ${res.status}`)

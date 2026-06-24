@@ -70,7 +70,7 @@ async function descargarCV() {
 async function guardarCV() {
   console.log('CV DATA:', JSON.stringify(cvData, null, 2))
   try {
-    await fetch('${import.meta.env.VITE_API_URL}/api/editar_cv/' + id_cv, {
+   await fetch(`${import.meta.env.VITE_API_URL}/api/editar_cv/${id_cv}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify(cvData)

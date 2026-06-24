@@ -15,8 +15,8 @@ async function registrarse() {
   if (password.value !== passwordConfirm.value) { error.value = 'Las contraseñas no coinciden'; return }
   cargando.value = true
   try {
-    const res = await fetch('${import.meta.env.VITE_API_URL}/api/auth/registro', {
-      method: 'POST',
+const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/registro`, {
+        method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre: nombre.value, apellidos: apellidos.value, email: email.value, contrasena: password.value })
     })

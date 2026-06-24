@@ -17,8 +17,8 @@ async function guardarCV() {
   cargando.value=true
   //peticion http
   try {
-    const response = await fetch('${import.meta.env.VITE_API_URL}/api/cv', {
-      method: 'POST',
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/cv`, {
+        method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify({
         ...store.formulario,
