@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useLangStore } from '@/store/langStore'
 
 const router = useRouter()
+const langStore = useLangStore()
 
 interface CvResumen {
   id_cv: number
@@ -20,7 +22,7 @@ async function cargarHistorial() {
   try {
     cargando.value = true
     const token = localStorage.getItem('token')
-   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/historial`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/historial`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     if (!res.ok) throw new Error(`Error ${res.status}`)
@@ -34,7 +36,7 @@ async function cargarHistorial() {
 }
 
 async function eliminarCv(id_cv: number) {
-  if (!confirm('¿Seguro que quieres eliminar este CV?')) return
+  if (!confirm(langStore.t.hist_delete_confirm)) return
   eliminando.value = id_cv
   try {
     const token = localStorage.getItem('token')
@@ -45,7 +47,7 @@ async function eliminarCv(id_cv: number) {
     if (!res.ok) throw new Error(`Error ${res.status}`)
     cvs.value = cvs.value.filter(c => c.id_cv !== id_cv)
   } catch (e: any) {
-    alert('No se pudo eliminar: ' + e.message)
+    alert(langStore.t.hist_delete_err + e.message)
   } finally {
     eliminando.value = null
   }
@@ -56,20 +58,17 @@ function verCv(id_cv: number) {
 }
 
 function formatFecha(fecha: string) {
-  return new Date(fecha).toLocaleDateString('es-ES', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  const locale = langStore.lang === 'es' ? 'es-ES' : 'en-GB'
+  return new Date(fecha).toLocaleDateString(locale, {
+    day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
   })
 }
 
 function irAlFormulario() {
   if (!localStorage.getItem('token')) {
-   return router.push('/login')
+    return router.push('/login')
   } else {
-   return router.push('/forms')
+    return router.push('/forms')
   }
 }
 
@@ -80,28 +79,24 @@ onMounted(() => cargarHistorial())
   <div class="page">
     <div class="card">
       <div class="header">
-        <h1>Mis CVs</h1>
-        <button class="btn-new" @click="irAlFormulario">+ Nuevo CV</button>
+        <h1>{{ langStore.t.hist_title }}</h1>
+        <button class="btn-new" @click="irAlFormulario">{{ langStore.t.hist_new }}</button>
       </div>
 
-      <!-- Estado: cargando -->
       <div v-if="cargando" class="estado-centro">
         <div class="spinner"></div>
-        <span>Cargando historial...</span>
+        <span>{{ langStore.t.hist_loading }}</span>
       </div>
 
-      <!-- Estado: error -->
       <div v-else-if="error" class="estado-centro estado-error">
-        <span>no se han encontrado CVs</span>
-        <button class="btn-retry" @click="cargarHistorial">Reintentar</button>
+        <span>{{ langStore.t.hist_not_found }}</span>
+        <button class="btn-retry" @click="cargarHistorial">{{ langStore.t.hist_retry }}</button>
       </div>
 
-      <!-- Estado: vacío -->
       <div v-else-if="cvs.length === 0" class="estado-centro estado-vacio">
-        <p>Todavía no has generado ningún CV.</p>
+        <p>{{ langStore.t.hist_empty }}</p>
       </div>
 
-      <!-- Lista de CVs -->
       <div v-else class="lista">
         <div
           v-for="cv in cvs"
@@ -157,12 +152,7 @@ onMounted(() => cargarHistorial())
   box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22px;
-}
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
 
 h1 { font-size: 18px; font-weight: 600; color: #111; }
 
@@ -170,72 +160,41 @@ h1 { font-size: 18px; font-weight: 600; color: #111; }
   background: #111; color: white;
   border: none; border-radius: 10px;
   padding: 8px 14px; font-size: 13px;
-  cursor: pointer; width: auto; margin: 0;
-  transition: 0.2s;
+  cursor: pointer; width: auto; margin: 0; transition: 0.2s;
 }
 .btn-new:hover { opacity: 0.85; transform: translateY(-1px); }
 
-/* ── Estados ── */
 .estado-centro {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 48px 0;
-  color: #888;
-  font-size: 14px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; padding: 48px 0; color: #888; font-size: 14px;
 }
-
 .estado-error { color: #b91c1c; }
-
-.estado-vacio .vacio-icon { font-size: 36px; }
 .estado-vacio p { color: #999; font-size: 14px; }
-.estado-vacio button {
-  background: #111; color: white;
-  border: none; border-radius: 10px;
-  padding: 9px 16px; font-size: 13px;
-  cursor: pointer; width: auto; margin: 0;
-  transition: 0.2s;
-}
 
 .btn-retry {
   background: #fee2e2; color: #b91c1c;
   border: none; border-radius: 8px;
-  padding: 7px 14px; font-size: 13px;
-  cursor: pointer; width: auto; margin: 0;
+  padding: 7px 14px; font-size: 13px; cursor: pointer; width: auto; margin: 0;
 }
 
-/* ── Spinner ── */
 .spinner {
   width: 22px; height: 22px;
-  border: 2.5px solid #e7e7e7;
-  border-top-color: #111;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  border: 2.5px solid #e7e7e7; border-top-color: #111;
+  border-radius: 50%; animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Lista ── */
 .lista { display: flex; flex-direction: column; gap: 8px; }
 
 .cv-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border: 1px solid #efefef;
-  border-radius: 12px;
-  background: #fafafa;
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  animation: fadeIn 0.2s ease;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border: 1px solid #efefef; border-radius: 12px;
+  background: #fafafa; cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s; animation: fadeIn 0.2s ease;
 }
 .cv-item:hover { border-color: #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
 .cv-item-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
-
-.cv-icon { font-size: 20px; flex-shrink: 0; }
-
 .cv-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 
 .cv-titulo {
@@ -247,25 +206,19 @@ h1 { font-size: 18px; font-weight: 600; color: #111; }
 
 .cv-empresa {
   font-size: 12px; color: #003399; font-weight: 500;
-  background: #eef2ff; border-radius: 6px;
-  padding: 1px 7px;
+  background: #eef2ff; border-radius: 6px; padding: 1px 7px;
 }
-
 .cv-fecha { font-size: 11.5px; color: #aaa; }
 
-/* ── Botones de acción ── */
 .cv-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
-.btn-ver, .btn-eliminar {
-  width: 32px; height: 32px;
-  border-radius: 8px; border: none;
+.btn-eliminar {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
   font-size: 14px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   padding: 0; margin: 0; transition: background 0.2s;
+  background: #fee2e2 !important; color: #b91c1c !important;
 }
-.btn-ver { background: #f3f4f6; }
-.btn-ver:hover { background: #e0e7ff; }
-.btn-eliminar { background: #fee2e2 !important; color: #b91c1c !important; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }

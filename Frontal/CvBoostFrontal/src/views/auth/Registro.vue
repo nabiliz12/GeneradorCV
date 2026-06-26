@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import router from '@/router'
+import { useLangStore } from '@/store/langStore'
 
+const langStore = useLangStore()
 const nombre = ref('')
 const apellidos = ref('')
 const email = ref('')
@@ -12,41 +14,42 @@ const cargando = ref(false)
 
 async function registrarse() {
   error.value = ''
-  if (password.value !== passwordConfirm.value) { error.value = 'Las contraseñas no coinciden'; return }
+  if (password.value !== passwordConfirm.value) { error.value = langStore.t.reg_err_pass; return }
   cargando.value = true
   try {
-const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/registro`, {
-        method: 'POST',
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/registro`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre: nombre.value, apellidos: apellidos.value, email: email.value, contrasena: password.value })
     })
-    if (!res.ok) { error.value = (await res.json()).detail || 'Error al registrarse'; return }
+    if (!res.ok) { error.value = (await res.json()).detail || langStore.t.reg_err_conn; return }
     router.push('/login')
-  } catch { error.value = 'Error de conexión' }
+  } catch { error.value = langStore.t.reg_err_conn }
   finally { cargando.value = false }
-
-
 }
 </script>
 
 <template>
   <div class="page">
     <div class="card">
-      <h1>Crear cuenta</h1>
+      <h1>{{ langStore.t.reg_title }}</h1>
       <div class="grid">
         <div class="row-2">
-          <input v-model="nombre" placeholder="Nombre" />
-          <input v-model="apellidos" placeholder="Apellidos" />
+          <input v-model="nombre" :placeholder="langStore.t.reg_name" />
+          <input v-model="apellidos" :placeholder="langStore.t.reg_last" />
         </div>
-        <input v-model="email" type="email" placeholder="Correo electrónico" />
-        <input v-model="password" type="password" placeholder="Contraseña" />
-        <input v-model="passwordConfirm" type="password" placeholder="Repetir contraseña" />
+        <input v-model="email" type="email" :placeholder="langStore.t.reg_email" />
+        <input v-model="password" type="password" :placeholder="langStore.t.reg_pass" />
+        <input v-model="passwordConfirm" type="password" :placeholder="langStore.t.reg_pass_confirm" />
       </div>
       <p v-if="error" class="error-msg">{{ error }}</p>
       <button @click="registrarse" :disabled="cargando" type="button">
-        {{ cargando ? 'Registrando...' : 'Crear cuenta' }}
+        {{ cargando ? langStore.t.reg_loading : langStore.t.reg_btn }}
       </button>
-      <p class="link-text">¿Ya tienes cuenta? <a @click="router.push('/login')">Inicia sesión</a></p>
+      <p class="link-text">
+        {{ langStore.t.reg_has_account }}
+        <a @click="router.push('/login')">{{ langStore.t.reg_login_link }}</a>
+      </p>
     </div>
   </div>
 </template>
@@ -89,25 +92,14 @@ input {
 input:focus { border-color: #111; background: white; }
 input::placeholder { color: #aaa; }
 .error-msg {
-  font-size: 13px;
-  color: #b91c1c;
-  margin-top: 10px;
-  padding: 8px 12px;
-  background: #fef2f2;
-  border-radius: 8px;
-  border: 1px solid #fee2e2;
+  font-size: 13px; color: #b91c1c;
+  margin-top: 10px; padding: 8px 12px;
+  background: #fef2f2; border-radius: 8px; border: 1px solid #fee2e2;
 }
 button {
-  border: none;
-  background: #111;
-  color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 12px;
-  transition: 0.2s;
-  width: 100%;
+  border: none; background: #111; color: white;
+  padding: 10px 14px; border-radius: 10px; font-size: 14px;
+  cursor: pointer; margin-top: 12px; transition: 0.2s; width: 100%;
 }
 button:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -118,4 +110,3 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   to   { opacity: 1; transform: translateY(0); }
 }
 </style>
-

@@ -1,55 +1,70 @@
 <script setup lang="ts">
-import { useCvFormStore } from '@/store/cvFormStore';
+import { computed } from 'vue'
+import { useCvFormStore } from '@/store/cvFormStore'
+import { useLangStore } from '@/store/langStore'
 
-const store=useCvFormStore()
+const store = useCvFormStore()
+const langStore = useLangStore()
 
-const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
-const aniosDisponibles = Array.from({ length: 101 }, (_, i) => String(new Date().getFullYear() - i))// array de los ultimos 100 años para los selects de fechas
-function agregarExperiencia() { store.formulario.experiencia.push({ cargo: '', empresa: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }) }
+const meses = computed(() => langStore.t.months)
+const aniosDisponibles = Array.from({ length: 101 }, (_, i) => String(new Date().getFullYear() - i))
+
+function agregarExperiencia() {
+  store.formulario.experiencia.push({ cargo: '', empresa: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false })
+}
 function eliminarExperiencia(i: number) { store.formulario.experiencia.splice(i, 1) }
-
 </script>
 
 <template>
-<div v-if="store.pagina === 4">
-        <h1>Experiencia <span class="opcional-badge">Opcional</span></h1>
-        <div class="chips-list">
-          <div v-for="(exp, index) in store.formulario.experiencia" :key="index" class="item-chip">
-            <div class="chip-fields">
-              <input v-model="exp.cargo" placeholder="Cargo" class="chip-input" />
-              <input v-model="exp.empresa" placeholder="Empresa" class="chip-input" />
-              <div class="fecha-row">
-                <span class="fecha-label">Inicio</span>
-                <div class="fecha-selects">
-                  <select v-model="exp.mesInicio" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                  <select v-model="exp.anioInicio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                </div>
-              </div>
-              <div class="fecha-row">
-                <span class="fecha-label">Fin</span>
-                <div class="fecha-selects">
-                  <template v-if="!exp.actualidad">
-                    <select v-model="exp.mesFin" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                    <select v-model="exp.anioFin" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                  </template>
-                  <label class="actualidad-check">
-                    <input type="checkbox" v-model="exp.actualidad" @change="if(exp.actualidad){ exp.mesFin=''; exp.anioFin='' }" />
-                    <span>Actualidad</span>
-                  </label>
-                </div>
-              </div>
+  <div v-if="store.pagina === 4">
+    <h1>{{ langStore.t.exp_title }} <span class="opcional-badge">{{ langStore.t.edu_optional }}</span></h1>
+    <div class="chips-list">
+      <div v-for="(exp, index) in store.formulario.experiencia" :key="index" class="item-chip">
+        <div class="chip-fields">
+          <input v-model="exp.cargo" :placeholder="langStore.t.exp_role" class="chip-input" />
+          <input v-model="exp.empresa" :placeholder="langStore.t.exp_company" class="chip-input" />
+          <div class="fecha-row">
+            <span class="fecha-label">{{ langStore.t.exp_start }}</span>
+            <div class="fecha-selects">
+              <select v-model="exp.mesInicio" class="chip-select-sm">
+                <option value="">{{ langStore.t.edu_month }}</option>
+                <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
+              </select>
+              <select v-model="exp.anioInicio" class="chip-select-sm">
+                <option value="">{{ langStore.t.edu_year }}</option>
+                <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
+              </select>
             </div>
-            <button v-if="store.formulario.experiencia.length > 1" @click="eliminarExperiencia(index)" type="button" class="chip-remove">✕</button>
+          </div>
+          <div class="fecha-row">
+            <span class="fecha-label">{{ langStore.t.exp_end }}</span>
+            <div class="fecha-selects">
+              <template v-if="!exp.actualidad">
+                <select v-model="exp.mesFin" class="chip-select-sm">
+                  <option value="">{{ langStore.t.edu_month }}</option>
+                  <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
+                </select>
+                <select v-model="exp.anioFin" class="chip-select-sm">
+                  <option value="">{{ langStore.t.edu_year }}</option>
+                  <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
+                </select>
+              </template>
+              <label class="actualidad-check">
+                <input type="checkbox" v-model="exp.actualidad" @change="if(exp.actualidad){ exp.mesFin=''; exp.anioFin='' }" />
+                <span>{{ langStore.t.exp_current }}</span>
+              </label>
+            </div>
           </div>
         </div>
-        <button @click="agregarExperiencia" type="button" class="btn-add">+ Agregar experiencia</button>
-        <div class="nav-buttons">
-          <button @click="store.anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="store.siguientePagina" type="button">Siguiente</button>
-        </div>
+        <button v-if="store.formulario.experiencia.length > 1" @click="eliminarExperiencia(index)" type="button" class="chip-remove">✕</button>
       </div>
-
-
+    </div>
+    <button @click="agregarExperiencia" type="button" class="btn-add">{{ langStore.t.exp_add }}</button>
+    <div class="nav-buttons">
+      <button @click="store.anteriorPagina" type="button" class="secondary">{{ langStore.t.exp_back }}</button>
+      <button @click="store.siguientePagina" type="button">{{ langStore.t.exp_next }}</button>
+    </div>
+  </div>
 </template>
 
 <style>

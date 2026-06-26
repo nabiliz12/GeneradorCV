@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useLangStore } from '@/store/langStore'
 
 const router = useRouter()
+const langStore = useLangStore()
 
 function irAlFormulario() {
   if (!localStorage.getItem('token')) {
@@ -14,20 +16,13 @@ function irAlFormulario() {
 
 <template>
   <section class="hero">
-
     <h1>
-      Convierte cualquier <span>oferta de trabajo</span> en tu CV perfecto
+      {{ langStore.t.hero_title_1 }} <span>{{ langStore.t.hero_title_2 }}</span> {{ langStore.t.hero_title_3 }}
     </h1>
-
-    <p>
-      Pega una oferta de empleo y nuestra IA crea un CV optimizado para esa posición.
-    </p>
-
+    <p>{{ langStore.t.hero_sub }}</p>
     <button class="btn-modern" @click="irAlFormulario">
-      Comenzar gratis
+      {{ langStore.t.hero_btn }}
     </button>
-
-
   </section>
 </template>
 
@@ -80,5 +75,11 @@ function irAlFormulario() {
   opacity: 0.9;
   transform: translateY(-1px);
   transition: 0.2s;
+}
+
+@media (max-width: 640px) {
+  .hero { padding: 60px 20px; }
+  .hero h1 { font-size: 32px !important; }
+  .hero p { font-size: 15px; }
 }
 </style>

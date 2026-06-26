@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useLangStore } from '@/store/langStore'
 
 const router = useRouter()
+const langStore = useLangStore()
 
 const cargando = ref(true)
 const guardando = ref(false)
@@ -27,8 +29,8 @@ function mostrarToast(msg: string, tipo: 'ok' | 'error') {
 
 onMounted(async () => {
   try {
-const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/perfil`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/perfil`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
     if (!res.ok) { router.push('/login'); return }
     const data = await res.json()
@@ -36,7 +38,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/perfil`, {
     apellidos.value = data.apellidos
     email.value = data.email
   } catch {
-    mostrarToast('Error al cargar el perfil', 'error')
+    mostrarToast(langStore.t.settings_toast_profile_err, 'error')
   } finally {
     cargando.value = false
   }
@@ -45,7 +47,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/perfil`, {
 async function guardarPerfil() {
   guardando.value = true
   try {
-const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/actualizar_perfil`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/actualizar_perfil`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -55,9 +57,9 @@ const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/actualizar_per
     })
     if (!res.ok) throw new Error()
     localStorage.setItem('nombre', nombre.value)
-    mostrarToast('Datos actualizados correctamente', 'ok')
+    mostrarToast(langStore.t.settings_toast_saved, 'ok')
   } catch {
-    mostrarToast('Error al guardar los datos', 'error')
+    mostrarToast(langStore.t.settings_toast_save_err, 'error')
   } finally {
     guardando.value = false
   }
@@ -65,33 +67,29 @@ const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/actualizar_per
 
 async function cambiarContrasena() {
   if (passNueva.value !== passConfirm.value) {
-    mostrarToast('Las contraseñas no coinciden', 'error'); return
+    mostrarToast(langStore.t.settings_toast_pass_nomatch, 'error'); return
   }
   if (passNueva.value.length < 3) {
-    mostrarToast('La contraseña debe tener al menos 3 caracteres', 'error'); return
+    mostrarToast(langStore.t.settings_toast_pass_short, 'error'); return
   }
   guardandoPass.value = true
   try {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/cambiar_contraseña`, {
-
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`
       },
-      body: JSON.stringify({
-        contrasena_actual: passActual.value,
-        nueva_contrasena: passNueva.value
-      })
+      body: JSON.stringify({ contrasena_actual: passActual.value, nueva_contrasena: passNueva.value })
     })
     const data = await res.json()
-    if (!res.ok) { mostrarToast(data.detail || 'Error al cambiar contraseña', 'error'); return }
+    if (!res.ok) { mostrarToast(data.detail || langStore.t.settings_toast_pass_err, 'error'); return }
     passActual.value = ''
     passNueva.value = ''
     passConfirm.value = ''
-    mostrarToast('Contraseña actualizada correctamente', 'ok')
+    mostrarToast(langStore.t.settings_toast_pass_changed, 'ok')
   } catch {
-    mostrarToast('Error de conexión', 'error')
+    mostrarToast(langStore.t.settings_toast_conn, 'error')
   } finally {
     guardandoPass.value = false
   }
@@ -100,7 +98,7 @@ async function cambiarContrasena() {
 async function eliminarCuenta() {
   eliminando.value = true
   try {
-   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/usuario`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/usuario`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
@@ -108,7 +106,7 @@ async function eliminarCuenta() {
     localStorage.clear()
     router.push('/')
   } catch {
-    mostrarToast('Error al eliminar la cuenta', 'error')
+    mostrarToast(langStore.t.settings_toast_delete_err, 'error')
     eliminando.value = false
     modalEliminar.value = false
   }
@@ -118,18 +116,16 @@ async function eliminarCuenta() {
 <template>
   <div class="page">
 
-    <!-- Toast -->
     <div v-if="toast" class="toast" :class="toast.tipo">{{ toast.msg }}</div>
 
-    <!-- Modal eliminar cuenta -->
     <div v-if="modalEliminar" class="modal-overlay" @click.self="modalEliminar = false">
       <div class="modal">
-        <h2>¿Eliminar cuenta?</h2>
-        <p>Esta acción es irreversible. Se eliminarán tu cuenta y todos tus CVs permanentemente.</p>
+        <h2>{{ langStore.t.settings_modal_title }}</h2>
+        <p>{{ langStore.t.settings_modal_text }}</p>
         <div class="modal-buttons">
-          <button class="secondary" @click="modalEliminar = false" type="button">Cancelar</button>
+          <button class="secondary" @click="modalEliminar = false" type="button">{{ langStore.t.settings_modal_cancel }}</button>
           <button class="danger" @click="eliminarCuenta" :disabled="eliminando" type="button">
-            {{ eliminando ? 'Eliminando...' : 'Sí, eliminar' }}
+            {{ eliminando ? langStore.t.settings_modal_deleting : langStore.t.settings_modal_confirm }}
           </button>
         </div>
       </div>
@@ -137,84 +133,81 @@ async function eliminarCuenta() {
 
     <div class="container">
       <div class="page-header">
-        <button class="btn-back" @click="router.back()" type="button">← Volver</button>
-        <h1>Ajustes</h1>
+        <button class="btn-back" @click="router.back()" type="button">{{ langStore.t.settings_back }}</button>
+        <h1>{{ langStore.t.settings_title }}</h1>
       </div>
 
       <div v-if="cargando" class="cargando">
         <div class="spinner"></div>
-        <span>Cargando...</span>
+        <span>{{ langStore.t.settings_loading }}</span>
       </div>
 
       <div v-else class="card">
 
-        <!-- Datos personales -->
         <div class="section">
-          <h2>Datos personales</h2>
-          <p class="section-desc">Actualiza tu nombre y apellidos</p>
+          <h2>{{ langStore.t.settings_personal_title }}</h2>
+          <p class="section-desc">{{ langStore.t.settings_personal_desc }}</p>
           <div class="fields">
             <div class="row-2">
               <div class="field-wrap">
-                <label>Nombre</label>
-                <input v-model="nombre" placeholder="Tu nombre" />
+                <label>{{ langStore.t.settings_name }}</label>
+                <input v-model="nombre" :placeholder="langStore.t.settings_name_placeholder" />
               </div>
               <div class="field-wrap">
-                <label>Apellidos</label>
-                <input v-model="apellidos" placeholder="Tus apellidos" />
+                <label>{{ langStore.t.settings_last }}</label>
+                <input v-model="apellidos" :placeholder="langStore.t.settings_last_placeholder" />
               </div>
             </div>
             <div class="field-wrap">
-              <label>Email</label>
+              <label>{{ langStore.t.settings_email }}</label>
               <input :value="email" disabled class="input-disabled" />
-              <span class="field-hint">El email no se puede cambiar</span>
+              <span class="field-hint">{{ langStore.t.settings_email_hint }}</span>
             </div>
           </div>
           <div class="section-footer">
             <button @click="guardarPerfil" :disabled="guardando" type="button">
-              {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+              {{ guardando ? langStore.t.settings_saving : langStore.t.settings_save }}
             </button>
           </div>
         </div>
 
         <div class="divider"></div>
 
-        <!-- Contraseña -->
         <div class="section">
-          <h2>Contraseña</h2>
-          <p class="section-desc">Cambia tu contraseña de acceso</p>
+          <h2>{{ langStore.t.settings_pass_title }}</h2>
+          <p class="section-desc">{{ langStore.t.settings_pass_desc }}</p>
           <div class="fields">
             <div class="field-wrap">
-              <label>Contraseña actual</label>
+              <label>{{ langStore.t.settings_pass_current }}</label>
               <input v-model="passActual" type="password" placeholder="••••••••" />
             </div>
             <div class="row-2">
               <div class="field-wrap">
-                <label>Nueva contraseña</label>
+                <label>{{ langStore.t.settings_pass_new }}</label>
                 <input v-model="passNueva" type="password" placeholder="••••••••" />
               </div>
               <div class="field-wrap">
-                <label>Repetir contraseña</label>
+                <label>{{ langStore.t.settings_pass_repeat }}</label>
                 <input v-model="passConfirm" type="password" placeholder="••••••••" />
               </div>
             </div>
           </div>
           <div class="section-footer">
             <button @click="cambiarContrasena" :disabled="guardandoPass" type="button">
-              {{ guardandoPass ? 'Cambiando...' : 'Cambiar contraseña' }}
+              {{ guardandoPass ? langStore.t.settings_pass_changing : langStore.t.settings_pass_change }}
             </button>
           </div>
         </div>
 
         <div class="divider"></div>
 
-        <!-- Zona de peligro -->
         <div class="section">
           <div class="danger-row">
             <div>
-              <span class="danger-desc">Se eliminarán tu cuenta y todos tus CVs permanentemente</span>
+              <span class="danger-desc">{{ langStore.t.settings_delete_desc }}</span>
             </div>
             <button class="btn-danger" @click="modalEliminar = true" type="button">
-              Eliminar cuenta
+              {{ langStore.t.settings_delete_btn }}
             </button>
           </div>
         </div>
@@ -234,9 +227,7 @@ async function eliminarCuenta() {
 
 .container { max-width: 520px; margin: 0 auto; }
 
-.page-header {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
-}
+.page-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
 
 h1 { font-size: 18px; font-weight: 600; color: #111; margin: 0; }
 
@@ -247,24 +238,16 @@ h1 { font-size: 18px; font-weight: 600; color: #111; margin: 0; }
 }
 .btn-back:hover { background: #e5e7eb; }
 
-/* ── Card única ── */
 .card {
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  overflow: hidden;
+  background: white; border: 1px solid #eee;
+  border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden;
 }
 
 .divider { height: 1px; background: #f0f0f0; }
 
-/* ── Secciones dentro de la card ── */
 .section { padding: 24px; }
 
-.section h2 {
-  font-size: 14px; font-weight: 600; color: #111;
-  margin: 0 0 3px 0;
-}
+.section h2 { font-size: 14px; font-weight: 600; color: #111; margin: 0 0 3px 0; }
 .section-desc { font-size: 12px; color: #999; margin: 0 0 18px 0; }
 
 .fields { display: flex; flex-direction: column; gap: 12px; }
@@ -297,13 +280,12 @@ button:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 button.secondary { background: #f3f4f6; color: #111; }
 
-/* ── Zona peligro ── */
 .danger-row {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 14px 16px; background: #fff5f5;
   border: 1px solid #fee2e2; border-radius: 10px;
+  flex-wrap: wrap;
 }
-.danger-title { display: block; font-size: 13px; font-weight: 600; color: #b91c1c; margin-bottom: 3px; }
 .danger-desc { display: block; font-size: 12px; color: #999; }
 .btn-danger {
   background: #b91c1c; color: white; border: none;
@@ -313,7 +295,6 @@ button.secondary { background: #f3f4f6; color: #111; }
 }
 .btn-danger:hover { opacity: 0.85; }
 
-/* ── Modal ── */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.4);
   display: flex; align-items: center; justify-content: center;
@@ -331,7 +312,6 @@ button.secondary { background: #f3f4f6; color: #111; }
 button.danger { background: #b91c1c; color: white; }
 button.danger:hover:not(:disabled) { opacity: 0.85; }
 
-/* ── Toast ── */
 .toast {
   position: fixed; bottom: 24px; right: 24px;
   padding: 12px 18px; border-radius: 10px;
@@ -342,7 +322,6 @@ button.danger:hover:not(:disabled) { opacity: 0.85; }
 .toast.ok { background: #111; color: white; }
 .toast.error { background: #b91c1c; color: white; }
 
-/* ── Spinner ── */
 .cargando {
   display: flex; flex-direction: column; align-items: center;
   gap: 12px; padding: 60px 0; color: #999; font-size: 14px;
@@ -358,5 +337,10 @@ button.danger:hover:not(:disabled) { opacity: 0.85; }
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .row-2 { grid-template-columns: 1fr; }
+  .danger-row { flex-direction: column; align-items: flex-start; }
 }
 </style>

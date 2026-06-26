@@ -1,38 +1,41 @@
 <script setup lang="ts">
-import { useCvFormStore } from '@/store/cvFormStore';
+import { useCvFormStore } from '@/store/cvFormStore'
+import { useLangStore } from '@/store/langStore'
 
-const store=useCvFormStore()
+const store = useCvFormStore()
+const langStore = useLangStore()
 
 function agregarIdioma() { store.formulario.idiomas.push({ idioma: '', nivel: '' }) }
 function eliminarIdioma(i: number) { store.formulario.idiomas.splice(i, 1) }
 </script>
 
 <template>
-     <div v-if="store.pagina === 5">
-        <h1>Idiomas <span class="opcional-badge">Opcional</span></h1>
-        <div class="chips-list">
-          <div v-for="(idioma, index) in store.formulario.idiomas" :key="index" class="item-chip item-chip--row">
-            <div class="field-wrap" style="flex:1">
-              <input v-model="idioma.idioma" placeholder="Idioma" class="chip-input" />
-            </div>
-            <div class="field-wrap" style="flex:0 0 130px">
-              <select v-model="idioma.nivel" class="chip-select">
-                <option disabled value="">Nivel</option>
-                <option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option>
-              </select>
-            </div>
-            <button @click="eliminarIdioma(index)" type="button" class="chip-remove">✕</button>
-          </div>
+  <div v-if="store.pagina === 5">
+    <h1>{{ langStore.t.lang_title }} <span class="opcional-badge">{{ langStore.t.edu_optional }}</span></h1>
+    <div class="chips-list">
+      <div v-for="(idioma, index) in store.formulario.idiomas" :key="index" class="item-chip item-chip--row">
+        <div class="field-wrap" style="flex:1">
+          <input v-model="idioma.idioma" :placeholder="langStore.t.lang_language" class="chip-input" />
         </div>
-        <button @click="agregarIdioma" type="button" class="btn-add">+ Agregar idioma</button>
-        <div class="nav-buttons">
-          <button @click="store.anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="store.siguientePagina" type="button">Siguiente</button>
+        <div class="field-wrap" style="flex:0 0 130px">
+          <select v-model="idioma.nivel" class="chip-select">
+            <option disabled value="">{{ langStore.t.lang_level }}</option>
+            <option>{{ langStore.t.lang_basic }}</option>
+            <option>{{ langStore.t.lang_intermediate }}</option>
+            <option>{{ langStore.t.lang_advanced }}</option>
+            <option>{{ langStore.t.lang_native }}</option>
+          </select>
         </div>
+        <button @click="eliminarIdioma(index)" type="button" class="chip-remove">✕</button>
       </div>
-
+    </div>
+    <button @click="agregarIdioma" type="button" class="btn-add">{{ langStore.t.lang_add }}</button>
+    <div class="nav-buttons">
+      <button @click="store.anteriorPagina" type="button" class="secondary">{{ langStore.t.lang_back }}</button>
+      <button @click="store.siguientePagina" type="button">{{ langStore.t.lang_next }}</button>
+    </div>
+  </div>
 </template>
-
 
 <style>
 h1 { font-size: 18px; font-weight: 600; margin-bottom: 22px; color: #111; display: flex; align-items: center; gap: 8px; }

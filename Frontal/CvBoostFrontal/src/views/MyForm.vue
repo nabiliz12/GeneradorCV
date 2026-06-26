@@ -9,22 +9,21 @@ import Skills from './components/Skills.vue'
 import OfertaDeTrabajo from './components/OfertaDeTrabajo.vue'
 import FotoDePerfil from './components/FotoDePerfil.vue'
 import ElegirPlantilla from './components/ElegirPlantilla.vue'
+import { useLangStore } from '@/store/langStore'
 import { onUnmounted } from 'vue'
 
-const store=useCvFormStore()
+const store = useCvFormStore()
+const langStore = useLangStore()
 onUnmounted(() => store.resetear())
-
 </script>
 
 <template>
   <div class="page">
     <div class="card">
 
-
-      <!-- BARRA DE PROGRESO -->
       <div class="progress-wrap">
         <div class="progress-header">
-          <span class="progress-step">Paso {{ store.pagina }} de {{ store.totalPaginas }}</span>
+          <span class="progress-step">{{ langStore.t.form_step }} {{ store.pagina }} {{ langStore.t.form_of }} {{ store.totalPaginas }}</span>
           <span class="progress-pct">{{ store.progreso }}%</span>
         </div>
         <div class="progress-track">
@@ -32,35 +31,15 @@ onUnmounted(() => store.resetear())
         </div>
       </div>
 
-      <!-- PAGE 1: Datos personales -->
-      <DatosPersonales></DatosPersonales>
-
-
-      <!-- PAGE 2: Educación -->
-      <Educacion></Educacion>
-
-
-      <!-- PAGE 3: Certificaciones -->
-      <Certificaciones></Certificaciones>
-
-      <!-- PAGE 4: Experiencia -->
-      <Experiencia></Experiencia>
-
-      <!-- PAGE 5: Idiomas -->
-      <Idiomas></Idiomas>
-
-
-      <!-- PAGE 6: Skills -->
-      <Skills></Skills>
-
-      <!-- PAGE 7: Oferta de trabajo -->
-      <OfertaDeTrabajo></OfertaDeTrabajo>
-
-      <!-- PAGE 8: Foto de perfil -->
-     <FotoDePerfil></FotoDePerfil>
-
-      <!-- PAGE 9: Elegir plantilla -->
-     <ElegirPlantilla></ElegirPlantilla>
+      <DatosPersonales />
+      <Educacion />
+      <Certificaciones />
+      <Experiencia />
+      <Idiomas />
+      <Skills />
+      <OfertaDeTrabajo />
+      <FotoDePerfil />
+      <ElegirPlantilla />
 
     </div>
   </div>

@@ -1,54 +1,70 @@
 <script setup lang="ts">
-import { useCvFormStore } from '@/store/cvFormStore';
+import { computed } from 'vue'
+import { useCvFormStore } from '@/store/cvFormStore'
+import { useLangStore } from '@/store/langStore'
 
-const store=useCvFormStore()
-const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
-const aniosDisponibles = Array.from({ length: 101 }, (_, i) => String(new Date().getFullYear() - i))// array de los ultimos 100 años para los selects de fechas
-function agregarEducacion() { store.formulario.educacion.push({ titulo: '', institucion: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false }) }
+const store = useCvFormStore()
+const langStore = useLangStore()
+
+const meses = computed(() => langStore.t.months)
+const aniosDisponibles = Array.from({ length: 101 }, (_, i) => String(new Date().getFullYear() - i))
+
+function agregarEducacion() {
+  store.formulario.educacion.push({ titulo: '', institucion: '', mesInicio: '', anioInicio: '', mesFin: '', anioFin: '', actualidad: false })
+}
 function eliminarEducacion(i: number) { store.formulario.educacion.splice(i, 1) }
-
-
 </script>
 
 <template>
-      <div v-if="store.pagina === 2">
-        <h1>Educación <span class="opcional-badge">Opcional</span></h1>
-        <div class="chips-list">
-          <div v-for="(edu, index) in store.formulario.educacion" :key="index" class="item-chip">
-            <div class="chip-fields">
-              <input v-model="edu.titulo" placeholder="Título obtenido" class="chip-input" />
-              <input v-model="edu.institucion" placeholder="Institución" class="chip-input" />
-              <div class="fecha-row">
-                <span class="fecha-label">Inicio</span>
-                <div class="fecha-selects">
-                  <select v-model="edu.mesInicio" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                  <select v-model="edu.anioInicio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                </div>
-              </div>
-              <div class="fecha-row">
-                <span class="fecha-label">Fin</span>
-                <div class="fecha-selects">
-                  <template v-if="!edu.actualidad">
-                    <select v-model="edu.mesFin" class="chip-select-sm" :disabled="edu.actualidad"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                    <select v-model="edu.anioFin" class="chip-select-sm" :disabled="edu.actualidad"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                  </template>
-                  <label class="actualidad-check">
-                    <input type="checkbox" v-model="edu.actualidad" @change="if(edu.actualidad){ edu.mesFin=''; edu.anioFin='' }" />
-                    <span>Actualidad</span>
-                  </label>
-                </div>
-              </div>
+  <div v-if="store.pagina === 2">
+    <h1>{{ langStore.t.edu_title }} <span class="opcional-badge">{{ langStore.t.edu_optional }}</span></h1>
+    <div class="chips-list">
+      <div v-for="(edu, index) in store.formulario.educacion" :key="index" class="item-chip">
+        <div class="chip-fields">
+          <input v-model="edu.titulo" :placeholder="langStore.t.edu_degree" class="chip-input" />
+          <input v-model="edu.institucion" :placeholder="langStore.t.edu_institution" class="chip-input" />
+          <div class="fecha-row">
+            <span class="fecha-label">{{ langStore.t.edu_start }}</span>
+            <div class="fecha-selects">
+              <select v-model="edu.mesInicio" class="chip-select-sm">
+                <option value="">{{ langStore.t.edu_month }}</option>
+                <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
+              </select>
+              <select v-model="edu.anioInicio" class="chip-select-sm">
+                <option value="">{{ langStore.t.edu_year }}</option>
+                <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
+              </select>
             </div>
-            <button v-if="store.formulario.educacion.length > 1" @click=eliminarEducacion(index) type="button" class="chip-remove">✕</button>
+          </div>
+          <div class="fecha-row">
+            <span class="fecha-label">{{ langStore.t.edu_end }}</span>
+            <div class="fecha-selects">
+              <template v-if="!edu.actualidad">
+                <select v-model="edu.mesFin" class="chip-select-sm" :disabled="edu.actualidad">
+                  <option value="">{{ langStore.t.edu_month }}</option>
+                  <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
+                </select>
+                <select v-model="edu.anioFin" class="chip-select-sm" :disabled="edu.actualidad">
+                  <option value="">{{ langStore.t.edu_year }}</option>
+                  <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
+                </select>
+              </template>
+              <label class="actualidad-check">
+                <input type="checkbox" v-model="edu.actualidad" @change="if(edu.actualidad){ edu.mesFin=''; edu.anioFin='' }" />
+                <span>{{ langStore.t.edu_current }}</span>
+              </label>
+            </div>
           </div>
         </div>
-        <button @click="agregarEducacion" type="button" class="btn-add">+ Agregar educación</button>
-        <div class="nav-buttons">
-          <button @click="store.anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="store.siguientePagina" type="button">Siguiente</button>
-        </div>
+        <button v-if="store.formulario.educacion.length > 1" @click="eliminarEducacion(index)" type="button" class="chip-remove">✕</button>
       </div>
-
+    </div>
+    <button @click="agregarEducacion" type="button" class="btn-add">{{ langStore.t.edu_add }}</button>
+    <div class="nav-buttons">
+      <button @click="store.anteriorPagina" type="button" class="secondary">{{ langStore.t.edu_back }}</button>
+      <button @click="store.siguientePagina" type="button">{{ langStore.t.edu_next }}</button>
+    </div>
+  </div>
 </template>
 
 <style>

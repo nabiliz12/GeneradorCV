@@ -1,31 +1,30 @@
 <script setup lang="ts">
-import { useCvFormStore } from '@/store/cvFormStore';
+import { useCvFormStore } from '@/store/cvFormStore'
+import { useLangStore } from '@/store/langStore'
 
-const store=useCvFormStore()
-
+const store = useCvFormStore()
+const langStore = useLangStore()
 </script>
 
 <template>
-     <div v-if="store.pagina === 7">
-        <h1>Oferta de trabajo <span class="opcional-badge">Opcional</span></h1>
-        <h2>Pega aquí la oferta a la que quieres aplicar para personalizar tu CV</h2>
-        <div class="grid">
-          <div class="field-wrap">
-            <input v-model="store.formulario.ofertaDeTrabajo.empresa" placeholder="Empresa" />
-          </div>
-          <div class="form-group">
-            <label>Descripción de la oferta</label>
-            <textarea v-model="store.formulario.ofertaDeTrabajo.descripcion" placeholder="Pega aquí el texto de la oferta de trabajo..." rows="6"></textarea>
-          </div>
-        </div>
-        <div class="nav-buttons">
-          <button @click="store.anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="store.siguientePagina" type="button">Siguiente</button>
-        </div>
+  <div v-if="store.pagina === 7">
+    <h1>{{ langStore.t.offer_title }} <span class="opcional-badge">{{ langStore.t.edu_optional }}</span></h1>
+    <h2>{{ langStore.t.offer_sub }}</h2>
+    <div class="grid">
+      <div class="field-wrap">
+        <input v-model="store.formulario.ofertaDeTrabajo.empresa" :placeholder="langStore.t.offer_company" />
       </div>
-
+      <div class="form-group">
+        <label>{{ langStore.t.offer_desc_label }}</label>
+        <textarea v-model="store.formulario.ofertaDeTrabajo.descripcion" :placeholder="langStore.t.offer_desc_placeholder" rows="6"></textarea>
+      </div>
+    </div>
+    <div class="nav-buttons">
+      <button @click="store.anteriorPagina" type="button" class="secondary">{{ langStore.t.offer_back }}</button>
+      <button @click="store.siguientePagina" type="button">{{ langStore.t.offer_next }}</button>
+    </div>
+  </div>
 </template>
-
 
 <style>
 h1 { font-size: 18px; font-weight: 600; margin-bottom: 22px; color: #111; display: flex; align-items: center; gap: 8px; }

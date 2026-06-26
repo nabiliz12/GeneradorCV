@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import router from '@/router'
+import { useLangStore } from '@/store/langStore'
 
+const langStore = useLangStore()
 const email = ref('')
 const contrasena = ref('')
 const error = ref('')
@@ -11,18 +13,18 @@ async function verificarLogin() {
   error.value = ''
   cargando.value = true
   try {
-const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.value, contrasena: contrasena.value })
     })
-    if (!res.ok) { error.value = (await res.json()).detail || 'Credenciales incorrectas'; return }
+    if (!res.ok) { error.value = (await res.json()).detail || langStore.t.login_err_creds; return }
     const data = await res.json()
     localStorage.setItem('token', data.access_token)
     localStorage.setItem('nombre', data.nombre)
     localStorage.setItem('email', email.value)
     window.location.href = '/'
-  } catch { error.value = 'Error de conexión' }
+  } catch { error.value = langStore.t.login_err_conn }
   finally { cargando.value = false }
 }
 </script>
@@ -30,16 +32,19 @@ const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
 <template>
   <div class="page">
     <div class="card">
-      <h1>Iniciar sesión</h1>
+      <h1>{{ langStore.t.login_title }}</h1>
       <div class="grid">
-        <input v-model="email" type="email" placeholder="Correo electrónico" />
-        <input v-model="contrasena" type="password" placeholder="Contraseña" />
+        <input v-model="email" type="email" :placeholder="langStore.t.login_email" />
+        <input v-model="contrasena" type="password" :placeholder="langStore.t.login_pass" />
       </div>
       <p v-if="error" class="error-msg">{{ error }}</p>
       <button @click="verificarLogin" :disabled="cargando" type="button">
-        {{ cargando ? 'Entrando...' : 'Entrar' }}
+        {{ cargando ? langStore.t.login_loading : langStore.t.login_btn }}
       </button>
-      <p class="link-text">¿No tienes cuenta? <a @click="router.push('/registro')">Regístrate</a></p>
+      <p class="link-text">
+        {{ langStore.t.login_no_account }}
+        <a @click="router.push('/registro')">{{ langStore.t.login_register_link }}</a>
+      </p>
     </div>
   </div>
 </template>
@@ -81,25 +86,14 @@ input {
 input:focus { border-color: #111; background: white; }
 input::placeholder { color: #aaa; }
 .error-msg {
-  font-size: 13px;
-  color: #b91c1c;
-  margin-top: 10px;
-  padding: 8px 12px;
-  background: #fef2f2;
-  border-radius: 8px;
-  border: 1px solid #fee2e2;
+  font-size: 13px; color: #b91c1c;
+  margin-top: 10px; padding: 8px 12px;
+  background: #fef2f2; border-radius: 8px; border: 1px solid #fee2e2;
 }
 button {
-  border: none;
-  background: #111;
-  color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 12px;
-  transition: 0.2s;
-  width: 100%;
+  border: none; background: #111; color: white;
+  padding: 10px 14px; border-radius: 10px; font-size: 14px;
+  cursor: pointer; margin-top: 12px; transition: 0.2s; width: 100%;
 }
 button:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }

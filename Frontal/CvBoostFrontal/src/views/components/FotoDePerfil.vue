@@ -1,56 +1,52 @@
 <script setup lang="ts">
-import { useCvFormStore } from '@/store/cvFormStore';
-import { ref } from 'vue';
+import { ref } from 'vue'
+import { useCvFormStore } from '@/store/cvFormStore'
+import { useLangStore } from '@/store/langStore'
 
-const store=useCvFormStore()
-const fileInput = ref<HTMLInputElement | null>(null) // referencia al input file para subir foto
-const fotoPerfil = ref<string | null>(null) // para almacenar la foto de perfil en base64
-
+const store = useCvFormStore()
+const langStore = useLangStore()
+const fileInput = ref<HTMLInputElement | null>(null)
+const fotoPerfil = ref<string | null>(null)
 
 function subirFoto() {
-   fileInput.value?.click()
+  fileInput.value?.click()
 }
 
 function onFileChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onload = () => { fotoPerfil.value = reader.result as string }
-  reader.readAsDataURL(file)
-  reader.onload = () =>{
-  fotoPerfil.value = reader.result as string
-  store.formulario.foto_base64 = reader.result as string
+  reader.onload = () => {
+    fotoPerfil.value = reader.result as string
+    store.formulario.foto_base64 = reader.result as string
   }
+  reader.readAsDataURL(file)
 }
-
 </script>
 
 <template>
-    <div v-if="store.pagina === 8">
-        <h1>Foto de perfil</h1>
-        <h2>¿Quieres añadir una foto a tu CV?</h2>
-        <div class="foto-opciones">
-          <button type="button" class="foto-opcion" :class="{ selected: store.ponerFotoParaDialog }" @click="store.ponerFotoParaDialog = true ; store.formulario.foto = true">
-            <span class="foto-opcion-label">Sí, añadir foto</span>
-          </button>
-          <button type="button" class="foto-opcion" :class="{ selected: !store.ponerFotoParaDialog }" @click="store.ponerFotoParaDialog = false; store.formulario.foto = false; store.formulario.foto_base64 = null;">
-            <span class="foto-opcion-label">Sin foto</span>
-          </button>
-        </div>
-        <div v-if="store.ponerFotoParaDialog" class="foto-upload-area">
-          <button @click="subirFoto" type="button" class="secondary">Subir foto</button>
-          <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="onFileChange" />
-          <img v-if="fotoPerfil" :src="fotoPerfil" class="avatar" />
-        </div>
-        <div class="nav-buttons" style="margin-top: 16px;">
-          <button @click="store.anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="store.siguientePagina" type="button">Siguiente</button>
-        </div>
-      </div>
-
-
+  <div v-if="store.pagina === 8">
+    <h1>{{ langStore.t.photo_title }}</h1>
+    <h2>{{ langStore.t.photo_sub }}</h2>
+    <div class="foto-opciones">
+      <button type="button" class="foto-opcion" :class="{ selected: store.ponerFotoParaDialog }" @click="store.ponerFotoParaDialog = true; store.formulario.foto = true">
+        <span class="foto-opcion-label">{{ langStore.t.photo_yes }}</span>
+      </button>
+      <button type="button" class="foto-opcion" :class="{ selected: !store.ponerFotoParaDialog }" @click="store.ponerFotoParaDialog = false; store.formulario.foto = false; store.formulario.foto_base64 = null">
+        <span class="foto-opcion-label">{{ langStore.t.photo_no }}</span>
+      </button>
+    </div>
+    <div v-if="store.ponerFotoParaDialog" class="foto-upload-area">
+      <button @click="subirFoto" type="button" class="secondary">{{ langStore.t.photo_upload }}</button>
+      <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="onFileChange" />
+      <img v-if="fotoPerfil" :src="fotoPerfil" class="avatar" />
+    </div>
+    <div class="nav-buttons" style="margin-top: 16px;">
+      <button @click="store.anteriorPagina" type="button" class="secondary">{{ langStore.t.photo_back }}</button>
+      <button @click="store.siguientePagina" type="button">{{ langStore.t.photo_next }}</button>
+    </div>
+  </div>
 </template>
-
 
 <style>
 h1 { font-size: 18px; font-weight: 600; margin-bottom: 22px; color: #111; display: flex; align-items: center; gap: 8px; }

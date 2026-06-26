@@ -1,44 +1,51 @@
 <script setup lang="ts">
-import { useCvFormStore } from '@/store/cvFormStore';
+import { computed } from 'vue'
+import { useCvFormStore } from '@/store/cvFormStore'
+import { useLangStore } from '@/store/langStore'
 
-const store=useCvFormStore()
-const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
-const aniosDisponibles = Array.from({ length: 101 }, (_, i) => String(new Date().getFullYear() - i))// array de los ultimos 100 años para los selects de fechas
+const store = useCvFormStore()
+const langStore = useLangStore()
+
+const meses = computed(() => langStore.t.months)
+const aniosDisponibles = Array.from({ length: 101 }, (_, i) => String(new Date().getFullYear() - i))
+
 function agregarCertificacion() { store.formulario.certificaciones.push({ certificacion: '', mes: '', anio: '' }) }
 function eliminarCertificacion(i: number) { store.formulario.certificaciones.splice(i, 1) }
 </script>
 
-
 <template>
-        <div v-if="store.pagina === 3">
-        <h1>Certificaciones <span class="opcional-badge">Opcional</span></h1>
-        <div class="chips-list">
-          <div v-for="(cert, index) in store.formulario.certificaciones" :key="index" class="item-chip">
-            <div class="chip-fields">
-              <input v-model="cert.certificacion" placeholder="Certificación" class="chip-input" />
-              <div class="fecha-row">
-                <span class="fecha-label">Expedición</span>
-                <div class="fecha-selects">
-                  <select v-model="cert.mes" class="chip-select-sm"><option value="">Mes</option><option v-for="m in meses" :key="m" :value="m">{{ m }}</option></select>
-                  <select v-model="cert.anio" class="chip-select-sm"><option value="">Año</option><option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option></select>
-                </div>
-              </div>
+  <div v-if="store.pagina === 3">
+    <h1>{{ langStore.t.cert_title }} <span class="opcional-badge">{{ langStore.t.edu_optional }}</span></h1>
+    <div class="chips-list">
+      <div v-for="(cert, index) in store.formulario.certificaciones" :key="index" class="item-chip">
+        <div class="chip-fields">
+          <input v-model="cert.certificacion" :placeholder="langStore.t.cert_cert" class="chip-input" />
+          <div class="fecha-row">
+            <span class="fecha-label">{{ langStore.t.cert_issue }}</span>
+            <div class="fecha-selects">
+              <select v-model="cert.mes" class="chip-select-sm">
+                <option value="">{{ langStore.t.edu_month }}</option>
+                <option v-for="m in meses" :key="m" :value="m">{{ m }}</option>
+              </select>
+              <select v-model="cert.anio" class="chip-select-sm">
+                <option value="">{{ langStore.t.edu_year }}</option>
+                <option v-for="a in aniosDisponibles" :key="a" :value="a">{{ a }}</option>
+              </select>
             </div>
-            <button @click="eliminarCertificacion(index)" type="button" class="chip-remove">✕</button>
           </div>
         </div>
-        <button @click="agregarCertificacion" type="button" class="btn-add">+ Agregar certificación</button>
-        <div class="nav-buttons">
-          <button @click="store.anteriorPagina" type="button" class="secondary">Atrás</button>
-          <button @click="store.siguientePagina" type="button">Siguiente</button>
-        </div>
+        <button @click="eliminarCertificacion(index)" type="button" class="chip-remove">✕</button>
       </div>
-
+    </div>
+    <button @click="agregarCertificacion" type="button" class="btn-add">{{ langStore.t.cert_add }}</button>
+    <div class="nav-buttons">
+      <button @click="store.anteriorPagina" type="button" class="secondary">{{ langStore.t.cert_back }}</button>
+      <button @click="store.siguientePagina" type="button">{{ langStore.t.cert_next }}</button>
+    </div>
+  </div>
 </template>
 
-
 <style>
-
 h1 { font-size: 18px; font-weight: 600; margin-bottom: 22px; color: #111; display: flex; align-items: center; gap: 8px; }
 .opcional-badge { font-size: 11px; font-weight: 500; background: #f3f4f6; color: #888; border-radius: 6px; padding: 2px 8px; }
 .chips-list { display: flex; flex-direction: column; gap: 8px; }
