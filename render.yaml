@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: generadorcv-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Back/Dockerfile
+    dockerContext: ./Back
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: GROQ_API_KEY
+        sync: false
